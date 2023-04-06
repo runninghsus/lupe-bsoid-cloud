@@ -1,0 +1,143 @@
+    # Project definitions (do not edit)
+Task: bottomup_clear
+scorer: hsu
+date: Sep21
+multianimalproject: false
+identity:
+
+    # Project path (change when moving around)
+project_path: /home/alex/Documents/GitHub/lupe-bsoid-cloud/bottomup_clear-hsu-2021-09-21
+
+    # Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+  E:\2021-09-20_16-21-04_15m-35m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-20_16-21-04_1h25m-2h10m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-20_16-21-04_3h20m-3h50m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-20_16-21-04_4h20m-5h10m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-20_16-21-04_0-5h10m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-28_11-58-20_0-20m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-29_10-31-19_0-20m.mp4:
+    crop: 0, 1280, 0, 720
+  E:\2021-09-29_10-31-19_5h5m-5h20m.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100421\2021-10-04_12-27-19.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100421\2021-10-04_13-11-53.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100421\2021-10-04_13-43-32.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100421\2021-10-04_14-17-40.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100421\2021-10-04_14-53-12.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100621\2021-10-06_16-33-00.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100621\2021-10-06_16-59-40.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100821\2021-10-08_13-07-13.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100821\2021-10-08_13-47-26.mp4:
+    crop: 0, 1280, 0, 720
+  F:\kw7193\videos\100821\2021-10-08_14-45-00.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\2021-11-22_16-46-58.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\2021-11-22_17-16-26.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg0.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg2.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg4.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg6.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg8.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg10.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg12.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg14.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\videos\112221\5min_segs\2021-11-22_17-39-22_5minseg16.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\data\raw_videos\112321\2021-11-23_13-19-58_25m-35m.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\data\raw_videos\112521\2021-11-25_13-28-05_25m-35m.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\data\raw_videos\112721\2021-11-27_14-36-39_25m-35m.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\data\raw_videos\112821\2021-11-28_14-34-43_1h44m-1h54m.mp4:
+    crop: 0, 1280, 0, 720
+  F:\ag25290\data\raw_videos\112921\2021-11-29_14-33-28_42m-52m.mp4:
+    crop: 0, 1280, 0, 720
+  H:\VideoOutputCamera 2-10082022-143844.avi:
+    crop: 0, 1024, 768
+  H:\VideoOutputCamera 2-10082022-150518.avi:
+    crop: 0, 1024, 768
+bodyparts:
+- snout
+- right-forepaw
+- left-forepaw
+- right-hindpaw
+- left-hindpaw
+- tail-base
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+start: 0
+stop: 1
+numframes2pick: 200
+
+    # Plotting configuration
+skeleton:
+- - snout
+  - right-forepaw
+- - snout
+  - left-forepaw
+- - right-forepaw
+  - right-hindpaw
+- - left-forepaw
+  - left-hindpaw
+- - right-hindpaw
+  - tail-base
+- - left-hindpaw
+  - tail-base
+skeleton_color: black
+pcutoff: 0.6
+dotsize: 5
+alphavalue: 0.7
+colormap: jet
+
+    # Training,Evaluation and Analysis configuration
+TrainingFraction:
+- 0.95
+iteration: 14
+default_net_type: resnet_50
+default_augmenter: default
+snapshotindex: -1
+batch_size: 8
+
+    # Cropping Parameters (for analysis and outlier frame detection)
+cropping: false
+    #if cropping is true for analysis, then set the values here:
+x1: 0
+x2: 640
+y1: 277
+y2: 624
+
+    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+- 50
+- 50
+move2corner: true
+resnet:
+croppedtraining: false
