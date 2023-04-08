@@ -68,7 +68,6 @@ if authentication_status:
         with midcol:
             authenticator.logout('Logout', 'main')
 
-
     def navigation():
         if selected == 'home':
             menu.load_view()
@@ -97,15 +96,7 @@ elif authentication_status is None:
 
 
 
-    # with register_tab:
-        # try:
-        #     if authenticator.register_user('Register user', preauthorization=False):
-        #         with open('./config.yaml', 'w') as file:
-        #             yaml.dump(config, file, default_flow_style=False)
-        #         st.success('User registered successfully')
-        # except Exception as e:
-        #     st.error(e)
-# else:
+
 
 
 

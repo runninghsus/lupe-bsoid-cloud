@@ -18,22 +18,24 @@ def load_view():
     example_pose = right_expander.file_uploader('Upload corresponding pose csv files',
                                                     accept_multiple_files=False,
                                                     type='csv', key='pose')
+    # st.write(st.session_state['features'])
+    try:
+        example_data = read_csvfiles([example_pose])
+        # copy video to local, only when csv and mp4/avi are uploaded
+        if example_video is not None and len(example_data) > 0:
+            if os.path.exists(example_video.name):
+                temporary_location = f'{example_video.name}'
+            else:
+                g = io.BytesIO(example_video.read())  # BytesIO Object
+                temporary_location = f'{example_video.name}'
+                with open(temporary_location, 'wb') as out:  # Open temporary file as bytes
+                    out.write(g.read())  # Read bytes into file
+                out.close()
 
-    # try:
-    example_data = read_csvfiles([example_pose])
-    # copy video to local, only when csv and mp4/avi are uploaded
-    if example_video is not None and len(example_data) > 0:
-        if os.path.exists(example_video.name):
-            temporary_location = f'{example_video.name}'
-        else:
-            g = io.BytesIO(example_video.read())  # BytesIO Object
-            temporary_location = f'{example_video.name}'
-            with open(temporary_location, 'wb') as out:  # Open temporary file as bytes
-                out.write(g.read())  # Read bytes into file
-            out.close()
-
-    movie_maker = behavior_movies(temporary_location, example_data, framerate=30)
-    movie_maker.main()
+        movie_maker = behavior_movies(temporary_location, example_data, framerate=30)
+        movie_maker.main()
+    except:
+        pass
 
 
 
