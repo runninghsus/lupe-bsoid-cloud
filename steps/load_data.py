@@ -16,8 +16,8 @@ def load_view():
             st.warning('please upload pkl file')
     with asoid_t:
         try:
-            if 'classifier' not in st.session_state:
-                st.markdown(f":blue[classifier] is in :orange[memory!]")
+            print(st.session_state['classifier'])
+            st.markdown(f":blue[classifier] is in :orange[memory!]")
         except:
             file1, file2 = st.columns(2)
             feats_targets_file = file1.file_uploader('Upload your feats_targets.sav',
