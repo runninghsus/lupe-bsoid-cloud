@@ -1,3 +1,5 @@
+import streamlit
+import time
 from utils.import_utils import *
 from utils.visual_utils import *
 
@@ -34,6 +36,8 @@ def load_view():
                     st.session_state['classifier'] = rescale_classifier(feats_targets_file, training_file)
             except:
                 st.warning('please upload sav file')
+            if 'classifier' in st.session_state:
+                st.experimental_rerun()
         try:
             conditions_list = list(st.session_state['features'].keys())
             st.markdown(f":blue[previously saved features] from conditions: "
@@ -63,6 +67,8 @@ def load_view():
                                 f":orange[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]")
             except:
                 pass
+            if 'features' in st.session_state:
+                st.experimental_rerun()
 
         try:
             condition_plot()
