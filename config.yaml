@@ -1,0 +1,13 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: some_cookie_name
+credentials:
+  usernames:
+    lupexbsoid-test:
+      email: lupexbsoid-test@gmail.com
+      name: lupexbsoid
+      password: $2b$12$S4y5tsI2WKNQN8003Tk/.e4FHf9e1crkJUD2ZW5uqnIkTusSJfX0e
+preauthorized:
+  emails:
+  - alexander.hsu.han@gmail.com
