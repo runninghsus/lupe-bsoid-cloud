@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 import ffmpeg
 import pandas as pd
-
+import joblib
+import pickle
+from sklearn.ensemble import RandomForestClassifier
 from utils.feature_utils import *
 
 
@@ -36,21 +38,6 @@ class csv_upload():
         self.data_filtered = []
         self.features = []
 
-    # def read_csvfiles(self):
-    #     for i, file in enumerate(self.uploaded_files):
-    #         curr_df = pd.read_csv(file, header=0, index_col=0, low_memory=False)
-    #         self.data_raw.append(np.array(curr_df))
-    #
-    # def get_bodyparts(self):
-    #     p = self.placeholder.multiselect('Identified __pose__ to include:',
-    #                                      [*self.data_raw[0][0, 0:-1:3]],
-    #                                      [*self.data_raw[0][0, 0:-1:3]])
-    #     for a in p:
-    #         # remove likelihood
-    #         index = [i for i, s in enumerate(self.data_raw[0][0, :]) if a in s][:2]
-    #         if index not in self.pose_chosen:
-    #             self.pose_chosen += index
-
     def filter_files(self):
         for data in self.data_raw:
             self.data_filtered.append(np.array(data[2:, self.pose_chosen], dtype=np.float64))
@@ -62,11 +49,58 @@ class csv_upload():
                                            self.framerate)
 
     def main(self):
-        # self.read_csvfiles()
-        # self.get_bodyparts()
         self.filter_files()
         self.process()
         return self.features
+
+
+def condition_prompt(uploaded_files, num_cond):
+    rows = int(np.ceil(num_cond / 2))
+    mod_ = num_cond % 2
+    for row in range(rows):
+        left_col, right_col = st.columns(2)
+        # left stays
+        left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
+                                          expanded=True)
+        uploaded_files[f'condition_{row * 2}'] = left_expander.file_uploader('Upload corresponding pose csv files',
+                                                                             accept_multiple_files=True,
+                                                                             type='csv',
+                                                                             key=f'pose_upload_1_{row}')
+        # right only when multiples of 2 or
+        if row == rows - 1:
+            if mod_ == 0:
+                right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                    expanded=True)
+                uploaded_files[f'condition_{row * 2 + 1}'] = right_expander.file_uploader(
+                    'Upload corresponding pose csv files',
+                    accept_multiple_files=True,
+                    type='csv',
+                    key=f'pose_upload_2_{row}')
+        else:
+            right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                expanded=True)
+            uploaded_files[f'condition_{row * 2 + 1}'] = right_expander.file_uploader(
+                'Upload corresponding pose csv files',
+                accept_multiple_files=True,
+                type='csv',
+                key=f'pose_upload_2_{row}')
+
+
+
+def load_pickle_model(model):
+    loaded_model = pickle.load(model)
+    return loaded_model
+
+
+def rescale_classifier(feats_targets_file, training_file):
+    [_, _, scalar, _] = joblib.load(feats_targets_file)
+    [_, X_train, Y_train, _, _, _] = joblib.load(training_file)
+    clf = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1,
+                                 criterion='gini',
+                                 class_weight='balanced_subsample')
+    X_train_inv = scalar.inverse_transform(X_train[-1][0])
+    clf.fit(X_train_inv, Y_train[-1][0])
+    return clf
 
 
 class behavior_movies():
