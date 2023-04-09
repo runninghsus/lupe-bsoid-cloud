@@ -1,8 +1,8 @@
 [theme]
 font="sans serif"
 base="light"
-primaryColor = '#FE589E'
-#secondaryBackgroundColor = '#EFEFEF'
+primaryColor = '#FF6A95'
+
 
 [server]
 maxUploadSize = 2048

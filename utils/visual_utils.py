@@ -28,6 +28,7 @@ def pie_predict(placeholder, condition, behavior_colors):
 
 
 def condition_plot():
+
     behavior_classes = st.session_state['classifier'].classes_
     option_expander = st.expander("Configure Plot",
                                   expanded=False)

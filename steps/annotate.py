@@ -4,9 +4,11 @@ import io
 from utils.import_utils import read_csvfiles, behavior_movies
 
 def load_view():
-    st.header('Annotate Behaviors')
+    st.markdown(f" <h1 style='text-align: left; color: #000000; font-size:30px; "
+                f"font-family:Avenir; font-weight:normal;'>Annotate behaviors</h1> "
+                , unsafe_allow_html=True)
+    st.write('')
     left_col, right_col = st.columns(2)
-
     # left stays
     left_expander = left_col.expander(f'Upload video to show example video:',
                                       expanded=True)
@@ -18,7 +20,6 @@ def load_view():
     example_pose = right_expander.file_uploader('Upload corresponding pose csv files',
                                                     accept_multiple_files=False,
                                                     type='csv', key='pose')
-    # st.write(st.session_state['features'])
     try:
         example_data = read_csvfiles([example_pose])
         # copy video to local, only when csv and mp4/avi are uploaded
@@ -37,17 +38,11 @@ def load_view():
     except:
         pass
 
-
-
-
-    # except:
-    #     pass
-
-
     bottom_cont = st.container()
     with bottom_cont:
         st.markdown("""---""")
         st.write('')
-        st.markdown(f'<span style="color:grey">LUPE X B-SOiD is developed by Alexander Hsu and '
+        st.markdown(f'<span style="color:grey; font-family:Avenir;">'
+                    f'LUPE X B-SOiD is developed by Alexander Hsu and '
                     f' Justin James </span>',
                     unsafe_allow_html=True)

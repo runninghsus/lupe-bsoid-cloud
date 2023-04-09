@@ -23,17 +23,18 @@ st.markdown(
     """
     <style>
     [data-testid="stSidebar"]{
-        min-width: 200px;
-        max-width: 200px;   
+        min-width: 230px;
+        max-width: 230px;   
     }
     [data-testid="stSidebar"][aria-expanded="false"] {
-        margin-left: -200px;
+        margin-left: -230px;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
 
 with open('./config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
@@ -51,17 +52,22 @@ authenticator = stauth.Authenticate(
 name, authentication_status, username = authenticator.login('Login', 'main')
 if authentication_status:
     with st.sidebar:
+        if 'user' not in st.session_state:
+            st.session_state.user = username
+        st.markdown(f" <h1 style='text-align: center; color: #FF064E; font-size:18px; "
+                    f"font-family:Avenir ;font-weight:normal;'>Hello, {name}!</h1> "
+                    , unsafe_allow_html=True)
         selected = option_menu(None, ['home', 'data upload', 'annotate behaviors'],
                                icons=['house', 'file-earmark-arrow-up', 'pencil-square'],
                                menu_icon="cast", default_index=0, orientation="vertical",
                                styles={
                                    "container": {"padding": "0!important", "background-color": "#fafafa"},
-                                   "icon": {"color": "black", "font-size": "20px"},
+                                   "icon": {"color": "black", "font-size": "18px"},
                                    "nav-link": {"color": "black", "font-size": "16px", "text-align": "center",
                                                 "margin": "0px",
                                                 "--hover-color": "#eee"},
-                                   "nav-link-selected": {"font-size": "16px", "font-weight": "normal",
-                                                         "color": "black", "background-color": "#FE589E"},
+                                   "nav-link-selected": {"font-size": "18px", "font-weight": "normal",
+                                                         "color": "black", "background-color": "#FF6A95"},
                                }
                                )
         _, midcol, _ = st.columns([0.5, 1, 0.5])

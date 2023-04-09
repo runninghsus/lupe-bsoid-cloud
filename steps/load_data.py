@@ -5,7 +5,10 @@ from utils.visual_utils import *
 
 
 def load_view():
-    st.subheader('Machine learning classifier + new data upload')
+    st.markdown(f" <h1 style='text-align: left; color: #000000; font-size:30px; "
+                f"font-family:Avenir; font-weight:normal;'>Machine learning classifier + new data upload</h1> "
+                , unsafe_allow_html=True)
+    st.write('')
     bsoid_t, asoid_t = st.tabs(['B-SOiD', 'A-SOiD'])
     with bsoid_t:
         uploaded_model = st.file_uploader('Upload your ',
@@ -69,7 +72,6 @@ def load_view():
                 pass
             if 'features' in st.session_state:
                 st.experimental_rerun()
-
         try:
             condition_plot()
         except:
@@ -79,6 +81,7 @@ def load_view():
     with bottom_cont:
         st.markdown("""---""")
         st.write('')
-        st.markdown(f'<span style="color:grey">LUPE X B-SOiD is developed by Alexander Hsu and '
+        st.markdown(f'<span style="color:grey; font-family:Avenir;">'
+                    f'LUPE X B-SOiD is developed by Alexander Hsu and '
                     f' Justin James </span>',
                     unsafe_allow_html=True)
