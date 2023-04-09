@@ -23,11 +23,11 @@ st.markdown(
     """
     <style>
     [data-testid="stSidebar"]{
-        min-width: 300px;
-        max-width: 300px;   
+        min-width: 200px;
+        max-width: 200px;   
     }
     [data-testid="stSidebar"][aria-expanded="false"] {
-        margin-left: -300px;
+        margin-left: -200px;
     }
     </style>
     """,
@@ -64,7 +64,7 @@ if authentication_status:
                                                          "color": "black", "background-color": "#FE589E"},
                                }
                                )
-        _, midcol, _ = st.columns(3)
+        _, midcol, _ = st.columns([0.5, 1, 0.5])
         with midcol:
             authenticator.logout('Logout', 'main')
 

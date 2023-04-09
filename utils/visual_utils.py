@@ -9,14 +9,20 @@ def pie_predict(placeholder, condition, behavior_colors):
     predict = st.session_state['classifier'].predict(st.session_state['features'][condition][0])
     predict_dict = {'condition': np.repeat(condition, len(predict)),
                     'behavior': predict}
-    df = pd.DataFrame(data=predict_dict)
-    behavior_classes = np.unique(predict)
+    df_raw = pd.DataFrame(data=predict_dict)
+    labels = df_raw['behavior'].value_counts(sort=False).index
+    values = df_raw['behavior'].value_counts(sort=False).values
+    # summary dataframe
+    df = pd.DataFrame()
+    df["values"] = values
+    df['labels'] = labels
+    df["colors"] = df["labels"].apply(lambda x: behavior_colors.get(x))  # to connect Column value to Color in Dict
     with placeholder:
-        labels = df['behavior'].value_counts().index
-        values = df['behavior'].value_counts().values
-        fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.4)])
-        fig.update_traces(hoverinfo='label+percent', textinfo='value', textfont_size=16,
-                          marker=dict(colors=behavior_colors,
+        fig = go.Figure(data=[go.Pie(labels=df["labels"], values=df["values"], hole=.4)])
+        fig.update_traces(hoverinfo='label+percent',
+                          textinfo='value',
+                          textfont_size=16,
+                          marker=dict(colors=df["colors"],
                                       line=dict(color='#000000', width=1)))
         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
@@ -25,20 +31,18 @@ def condition_plot():
     behavior_classes = st.session_state['classifier'].classes_
     option_expander = st.expander("Configure Plot",
                                   expanded=False)
-    behavior_colors = []
+    behavior_colors = {key: [] for key in behavior_classes}
     all_c_options = list(mcolors.CSS4_COLORS.keys())
-
     np.random.seed(42)
     selected_idx = np.random.choice(np.arange(len(all_c_options)),
                                     len(behavior_classes),
                                     replace=False)
     default_colors = [all_c_options[s] for s in selected_idx]
-
     for i, class_id in enumerate(behavior_classes):
-        behavior_colors.append(option_expander.selectbox(f'Color for {behavior_classes[i]}',
+        behavior_colors[class_id] = option_expander.selectbox(f'Color for {behavior_classes[i]}',
                                                          all_c_options,
                                                          index=all_c_options.index(default_colors[i]),
-                                                         key=f'color_option{i}'))
+                                                         key=f'color_option{i}')
     num_cond = len(st.session_state['features'])
     rows = int(np.ceil(num_cond / 2))
     mod_ = num_cond % 2
