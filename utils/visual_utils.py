@@ -10,18 +10,22 @@ from matplotlib.colors import ListedColormap
 import matplotlib.patches as mpatches
 
 
-def ethogram_plot(new_predictions, behavior_names, behavior_colors, file_idx):
+def ethogram_plot(condition, new_predictions, behavior_names, behavior_colors, length_):
+    colL, colR = st.columns(2)
+    if len(new_predictions) == 1:
+        colL.markdown(':orange[1] file only')
+        f_select = 0
+    else:
+        f_select = colL.slider('select file to generate ethogram',
+                             min_value=1, max_value=len(new_predictions), value=1)
+    file_idx = f_select - 1
     prefill_array = np.zeros((len(new_predictions[file_idx]),
                               len(st.session_state['classifier'].classes_)))
     default_colors_wht = ['w']
     default_colors_wht.extend(behavior_colors)
     cmap_ = ListedColormap(default_colors_wht)
-    colL, colR = st.columns(2)
 
-    length_ = colL.slider('number of frames',
-                          min_value=30, max_value=int(len(new_predictions[file_idx])/10),
-                          value=100,
-                          key=f'slider_{file_idx}')
+
     count = 0
     for b in np.unique(st.session_state['classifier'].classes_):
         idx_b = np.where(new_predictions[file_idx] == b)[0]
@@ -30,44 +34,44 @@ def ethogram_plot(new_predictions, behavior_names, behavior_colors, file_idx):
     fig, ax = plt.subplots(1, 1, figsize=(7, 7))
     seed_num = colR.number_input('seed for segment',
                                  min_value=0, max_value=None, value=42,
-                                 key=f'seed_{file_idx}')
+                                 key=f'cond{condition}_seed')
     np.random.seed(seed_num)
     behaviors_with_names = behavior_names
-
-    if st.checkbox('use randomized time',
+    if colL.checkbox('use randomized time',
                    value=True,
-                   key=f'ckbx_{file_idx}'):
+                   key=f'cond{condition}_ckbx'):
         rand_start = np.random.choice(prefill_array.shape[0] - length_, 1, replace=False)
         ax.imshow(prefill_array[int(rand_start):int(rand_start + length_), :].T, cmap=cmap_)
         # ax.set_yticks(np.arange(0, len(behaviors_with_names), 1))
         # ax.set_yticklabels(np.arange(0, len(behaviors_with_names), 1))
-        ax.set_xticks(np.arange(0, length_, int(length_/5)))
-        ax.set_xticklabels(np.arange(int(rand_start), int(rand_start + length_), int(length_/5)))
+        ax.set_xticks(np.arange(0, length_, int(length_ / 5)))
+        ax.set_xticklabels(np.arange(int(rand_start), int(rand_start + length_), int(length_ / 5)))
         ax.set_xlabel('Frame #')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
     else:
         rand_start = 0
-        ax.imshow(prefill_array[rand_start:rand_start+length_, :].T, cmap=cmap_)
-        ax.set_xticks(np.arange(rand_start, length_, int(length_/1)))
-        ax.set_xticklabels(np.arange(0, length_, int(length_/1)))
+        ax.imshow(prefill_array[rand_start:rand_start + length_, :].T, cmap=cmap_)
+        ax.set_xticks(np.arange(rand_start, length_, int(length_ / 1)))
+        ax.set_xticklabels(np.arange(0, length_, int(length_ / 1)))
         ax.set_xlabel('Frame #')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
 
-    return fig, prefill_array, rand_start, length_
+    return fig, prefill_array, rand_start
 
 
-def ethogram_predict(placeholder, condition, behavior_colors):
+def ethogram_predict(placeholder, condition, behavior_colors, length_):
     behavior_classes = st.session_state['classifier'].classes_
     predict = []
     # TODO: find a color workaround if a class is missing
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
-        fig, prefill_array, rand_start, length_ = ethogram_plot(predict, behavior_classes, list(behavior_colors.values()), f)
-        st.pyplot(fig)
-
+        etho_placeholder = st.empty()
+        fig, prefill_array, rand_start = ethogram_plot(condition, predict, behavior_classes,
+                                                       list(behavior_colors.values()), length_)
+        etho_placeholder.pyplot(fig)
 
 
 def pie_predict(placeholder, condition, behavior_colors):
@@ -115,14 +119,18 @@ def condition_etho_plot():
     rows = int(np.ceil(num_cond / 2))
     mod_ = num_cond % 2
     count = 0
+    length_ = st.slider('number of frames',
+                        min_value=25, max_value=250,
+                        value=100,
+                        key=f'length_slider')
     for row in range(rows):
         left_col, right_col = st.columns(2)
         # left stays
         left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
                                           expanded=True)
         ethogram_predict(left_expander,
-                    list(st.session_state['features'].keys())[count],
-                    behavior_colors)
+                         list(st.session_state['features'].keys())[count],
+                         behavior_colors, length_)
         predict_csv = csv_predict(
             list(st.session_state['features'].keys())[count],
         )
@@ -141,8 +149,8 @@ def condition_etho_plot():
                 right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                     expanded=True)
                 ethogram_predict(right_expander,
-                            list(st.session_state['features'].keys())[count],
-                            behavior_colors)
+                                 list(st.session_state['features'].keys())[count],
+                                 behavior_colors, length_)
                 predict_csv = csv_predict(
                     list(st.session_state['features'].keys())[count],
                 )
@@ -159,8 +167,8 @@ def condition_etho_plot():
             right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                 expanded=True)
             ethogram_predict(right_expander,
-                        list(st.session_state['features'].keys())[count],
-                        behavior_colors)
+                             list(st.session_state['features'].keys())[count],
+                             behavior_colors, length_)
             predict_csv = csv_predict(
                 list(st.session_state['features'].keys())[count],
             )
@@ -173,6 +181,7 @@ def condition_etho_plot():
                 key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
             )
             count += 1
+
 
 def condition_pie_plot():
     behavior_classes = st.session_state['classifier'].classes_
