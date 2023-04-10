@@ -87,7 +87,7 @@ def load_view():
                 pass
             if 'features' in st.session_state:
                 st.experimental_rerun()
-        condition_etho_plot()
+        # condition_etho_plot()
         try:
             analysis_chosen = st.radio('analysis method',
                                        ['ethogram', 'duration pie', 'bout counts', 'bout duration'],
