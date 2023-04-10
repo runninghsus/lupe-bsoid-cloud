@@ -47,5 +47,72 @@ def duration_pie_csv(condition):
     return convert_df(concat_df)
 
 
+def get_num_bouts(predict, behavior_classes):
+    bout_counts = []
+    bout_start_idx = np.where(np.diff(np.hstack([-1, predict])) != 0)[0]
+    bout_start_label = predict[bout_start_idx]
+    for b in behavior_classes:
+        idx_b = np.where(bout_start_label == int(b))[0]
+        if len(idx_b) > 0:
+            bout_counts.append(len(idx_b))
+        else:
+            bout_counts.append(0)
+    return bout_counts
 
+
+def bout_bar_csv(condition):
+    predict_dict = {key: [] for key in range(len(st.session_state['features'][condition]))}
+    bout_counts = {key: [] for key in range(len(st.session_state['features'][condition]))}
+    behavior_classes = st.session_state['classifier'].classes_
+    predict = []
+    bout_counts_df = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    for f in range(len(predict)):
+        bout_counts[f] = get_num_bouts(predict[f], behavior_classes)
+        predict_dict[f] = {'condition': np.repeat(condition, len(behavior_classes)),
+                           'file': np.repeat(f, len(behavior_classes)),
+                           'behavior': behavior_classes,
+                           'number of bouts': bout_counts[f],
+                           }
+        bout_counts_df.append(pd.DataFrame(predict_dict[f]))
+    concat_df = pd.concat([bout_counts_df[f] for f in range(len(bout_counts_df))])
+    return convert_df(concat_df)
+
+
+def get_duration_bouts(predict, behavior_classes):
+    behav_durations = []
+    bout_start_idx = np.where(np.diff(np.hstack([-1, predict])) != 0)[0]
+    bout_durations = np.hstack([np.diff(bout_start_idx), len(predict) - np.max(bout_start_idx)])
+    bout_start_label = predict[bout_start_idx]
+    for b in behavior_classes:
+        idx_b = np.where(bout_start_label == int(b))[0]
+        if len(idx_b) > 0:
+            behav_durations.append(bout_durations[idx_b])
+        else:
+            behav_durations.append(0)
+    return behav_durations
+
+
+def duration_ridge_csv(condition):
+    predict_dict = {key: [] for key in range(len(st.session_state['features'][condition]))}
+    durations_ = {key: [] for key in range(len(st.session_state['features'][condition]))}
+    behavior_classes = st.session_state['classifier'].classes_
+    predict = []
+    durations_df = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    for f in range(len(predict)):
+        durations_[f] = get_duration_bouts(predict[f], behavior_classes)
+        predict_dict[f] = {'condition': np.hstack([np.repeat(condition, len(durations_[f][i]))
+                                                   for i in range(len(durations_[f]))]),
+                           'file': np.hstack([np.repeat(f, len(durations_[f][i]))
+                                              for i in range(len(durations_[f]))]),
+                           'behavior': np.hstack([np.repeat(behavior_classes[i],
+                                                  len(durations_[f][i])) for i in range(len(durations_[f]))]),
+                           'duration': np.hstack(durations_[f]),
+                           }
+        durations_df.append(pd.DataFrame(predict_dict[f]))
+    concat_df = pd.concat([durations_df[f] for f in range(len(durations_df))])
+    return convert_df(concat_df)
 

@@ -87,23 +87,24 @@ def load_view():
                 pass
             if 'features' in st.session_state:
                 st.experimental_rerun()
-        # condition_etho_plot()
+        st.write('---')
+        # condition_pie_plot()
         try:
-            analysis_chosen = st.radio('analysis method',
+            mid_expander = st.expander('Analysis method', expanded=True)
+            analysis_chosen = mid_expander.radio('',
                                        ['ethogram', 'duration pie', 'bout counts', 'bout duration'],
                                        horizontal=True)
             if analysis_chosen == 'ethogram':
                 condition_etho_plot()
+                # st.write('placeholder for ethogram')
             if analysis_chosen == 'duration pie':
                 condition_pie_plot()
-
             if analysis_chosen == 'bout counts':
-
-                st.write('placeholder for bout counts')
-
+                condition_bar_plot()
+                # st.write('placeholder for bout counts')
             if analysis_chosen == 'bout duration':
-                st.write('placeholder for bout_durations')
-
+                condition_ridge_plot()
+                # st.write('placeholder for bout_durations')
         except:
             pass
 
