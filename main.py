@@ -73,7 +73,7 @@ _, mid, _ = st.columns([1, 4, 1])
 with mid:
     name, authentication_status, username = authenticator.login('Login', 'main')
 if not authentication_status:
-    logo_placeholder.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(banner) + "</p>",
+    logo_placeholder.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(banner, width=400) + "</p>",
                               unsafe_allow_html=True)
 elif authentication_status:
     with st.sidebar:

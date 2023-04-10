@@ -203,10 +203,8 @@ def pie_predict(placeholder, condition, behavior_colors):
         behavior_labels.append(behavior_classes[int(l)])
     df["values"] = values
     df['labels'] = behavior_labels
-
     df["colors"] = df["labels"].apply(lambda x:
                                       behavior_colors.get(x))  # to connect Column value to Color in Dict
-    st.write([names[int(i)] for i in df["labels"]])
     with placeholder:
         fig = go.Figure(data=[go.Pie(labels=[names[int(i)] for i in df["labels"]], values=df["values"], hole=.4)])
         fig.update_traces(hoverinfo='label+percent',
