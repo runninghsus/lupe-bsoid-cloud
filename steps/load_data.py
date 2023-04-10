@@ -32,6 +32,11 @@ def load_view():
             st.button(text_, on_click=clear_classifier)
 
         except:
+            if st.checkbox('use demo model and data'):
+                with open('./models/demo.pkl', 'rb') as fr:
+                    st.session_state['classifier'] = pickle.load(fr)
+                with open('./data/demo.pkl', 'rb') as fr:
+                    st.session_state['features'] = pickle.load(fr)
             file1, file2 = st.columns(2)
             feats_targets_file = file1.file_uploader('Upload your feats_targets.sav',
                                                      accept_multiple_files=False,
@@ -45,6 +50,7 @@ def load_view():
             try:
                 if 'classifier' not in st.session_state:
                     st.session_state['classifier'] = rescale_classifier(feats_targets_file, training_file)
+                    # pickle.dump(st.session_state['classifier'], open('./models/demo.pkl', 'wb'))
             except:
                 st.warning('please upload sav file')
             if 'classifier' in st.session_state:
@@ -83,12 +89,12 @@ def load_view():
                         st.session_state['features'] = features
                     st.markdown(f":blue[saved features] from conditions: "
                                 f":orange[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]")
+                    # pickle.dump(st.session_state['features'], open('./data/demo.pkl', 'wb'))
             except:
                 pass
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_pie_plot()
         try:
             mid_expander = st.expander('Analysis method', expanded=True)
             analysis_chosen = mid_expander.radio('',
