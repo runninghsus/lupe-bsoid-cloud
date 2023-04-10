@@ -21,11 +21,9 @@ def img_to_html(img_path, width=500):
 
 
 icon = './images/icon_only/color_transparent.png'
-banner = './images/png/color_with_background_banner.png'
-sidebar_banner = './images/png/color_transparent_banner.png'
+banner = './images/png/color_transparent_banner.png'
 
 icon_img = Image.open(icon)
-# banner = Image.open('./images/png/color_with_background_banner.png')
 st.set_page_config(layout="wide",
                    page_title='LUPE X B-SOiD',
                    page_icon=icon_img)
@@ -36,7 +34,7 @@ hide_streamlit_style = """
             </style>
             """
 _, center, _ = st.columns([1, 12, 0.1])
-# st.image(banner)
+
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.markdown(
@@ -75,10 +73,11 @@ _, mid, _ = st.columns([1, 4, 1])
 with mid:
     name, authentication_status, username = authenticator.login('Login', 'main')
 if not authentication_status:
-    logo_placeholder.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(banner) + "</p>", unsafe_allow_html=True)
+    logo_placeholder.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(banner) + "</p>",
+                              unsafe_allow_html=True)
 elif authentication_status:
     with st.sidebar:
-        st.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(sidebar_banner, width=200) + "</p>",
+        st.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(banner, width=200) + "</p>",
                     unsafe_allow_html=True)
         if 'user' not in st.session_state:
             st.session_state.user = username
