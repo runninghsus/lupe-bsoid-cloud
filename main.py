@@ -4,11 +4,31 @@ from streamlit_option_menu import option_menu
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
+from PIL import Image
+from pathlib import Path
+import base64
 
 
+def img_to_bytes(img_path):
+    img_bytes = Path(img_path).read_bytes()
+    encoded = base64.b64encode(img_bytes).decode()
+    return encoded
+
+
+def img_to_html(img_path, width=500):
+    img_html = f"<img src='data:image/png;base64,{img_to_bytes(img_path)}'  width='{width}px', class='img-fluid'>"
+    return img_html
+
+
+icon = './images/icon_only/color_transparent.png'
+banner = './images/png/color_with_background_banner.png'
+sidebar_banner = './images/png/color_transparent_banner.png'
+
+icon_img = Image.open(icon)
+# banner = Image.open('./images/png/color_with_background_banner.png')
 st.set_page_config(layout="wide",
                    page_title='LUPE X B-SOiD',
-                   page_icon='🪤')
+                   page_icon=icon_img)
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -16,18 +36,18 @@ hide_streamlit_style = """
             </style>
             """
 _, center, _ = st.columns([1, 12, 0.1])
-# st.image('./images/logo.png')
+# st.image(banner)
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.markdown(
     """
     <style>
     [data-testid="stSidebar"]{
-        min-width: 230px;
-        max-width: 230px;   
+        min-width: 250px;
+        max-width: 250px;   
     }
     [data-testid="stSidebar"][aria-expanded="false"] {
-        margin-left: -230px;
+        margin-left: -250px;
     }
     </style>
     """,
@@ -48,10 +68,18 @@ authenticator = stauth.Authenticate(
     config['preauthorized']
 )
 
-
-name, authentication_status, username = authenticator.login('Login', 'main')
-if authentication_status:
+logo_placeholder = st.empty()
+st.write('')
+st.write('')
+_, mid, _ = st.columns([1, 4, 1])
+with mid:
+    name, authentication_status, username = authenticator.login('Login', 'main')
+if not authentication_status:
+    logo_placeholder.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(banner) + "</p>", unsafe_allow_html=True)
+elif authentication_status:
     with st.sidebar:
+        st.markdown("<p style='text-align: center; color: grey; '>" + img_to_html(sidebar_banner, width=200) + "</p>",
+                    unsafe_allow_html=True)
         if 'user' not in st.session_state:
             st.session_state.user = username
         st.markdown(f" <h1 style='text-align: center; color: #FF064E; font-size:18px; "
