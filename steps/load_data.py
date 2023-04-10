@@ -2,6 +2,8 @@ import streamlit
 import time
 from utils.import_utils import *
 from utils.visual_utils import *
+from utils.download_utils import *
+from stqdm import stqdm
 
 
 def load_view():
@@ -22,7 +24,12 @@ def load_view():
     with asoid_t:
         try:
             print(st.session_state['classifier'])
-            st.markdown(f":blue[classifier] is in :orange[memory!]")
+            text_ = f":orange[reset classifier] in :blue[memory!]"
+            def clear_classifier():
+                del st.session_state['classifier']
+
+            st.button(text_, on_click=clear_classifier)
+
         except:
             file1, file2 = st.columns(2)
             feats_targets_file = file1.file_uploader('Upload your feats_targets.sav',
@@ -43,14 +50,17 @@ def load_view():
                 st.experimental_rerun()
         try:
             conditions_list = list(st.session_state['features'].keys())
-            st.markdown(f":blue[previously saved features] from conditions: "
-                        f":orange[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]")
+            text_ = f":orange[reset data] from conditions: :blue[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]"
+            def clear_features():
+                del st.session_state['features']
+
+            st.button(text_, on_click=clear_features)
+
         except:
             num_cond = st.number_input('How many conditions?', min_value=2, max_value=10, value=2)
             uploaded_files = {f'condition_{key}': [] for key in range(num_cond)}
             features = {f'condition_{key}': [] for key in range(num_cond)}
             condition_prompt(uploaded_files, num_cond)
-
             try:
                 data_raw = []
                 for i, condition in enumerate(list(uploaded_files.keys())):
@@ -61,7 +71,10 @@ def load_view():
                 conditions_list = list(uploaded_files.keys())
                 if st.button(f"extract features from conditions: "
                              f"{' & '.join([i.rpartition('_')[2] for i in conditions_list])}"):
-                    for i, condition in enumerate(list(uploaded_files.keys())):
+                    for i, condition in enumerate(
+                            stqdm(list(uploaded_files.keys()),
+                                  desc=f"Extracting spatiotemporal features from "
+                                       f"{' & '.join([i.rpartition('_')[2] for i in conditions_list])}")):
                         loader = csv_upload(data_raw[i], pose_chosen, condition, framerate=30)
                         features[condition] = loader.main()
                     if 'features' not in st.session_state:

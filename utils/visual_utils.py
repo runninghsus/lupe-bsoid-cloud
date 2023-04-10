@@ -3,12 +3,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.colors as mcolors
 import plotly.graph_objects as go
+from utils.download_utils import *
 
 
 def pie_predict(placeholder, condition, behavior_colors):
-    predict = st.session_state['classifier'].predict(st.session_state['features'][condition][0])
-    predict_dict = {'condition': np.repeat(condition, len(predict)),
-                    'behavior': predict}
+    predict = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    predict_dict = {'condition': np.repeat(condition, len(np.hstack(predict))),
+                    'behavior': np.hstack(predict)}
     df_raw = pd.DataFrame(data=predict_dict)
     labels = df_raw['behavior'].value_counts(sort=False).index
     values = df_raw['behavior'].value_counts(sort=False).values
@@ -28,7 +31,6 @@ def pie_predict(placeholder, condition, behavior_colors):
 
 
 def condition_plot():
-
     behavior_classes = st.session_state['classifier'].classes_
     option_expander = st.expander("Configure Plot",
                                   expanded=False)
@@ -41,9 +43,9 @@ def condition_plot():
     default_colors = [all_c_options[s] for s in selected_idx]
     for i, class_id in enumerate(behavior_classes):
         behavior_colors[class_id] = option_expander.selectbox(f'Color for {behavior_classes[i]}',
-                                                         all_c_options,
-                                                         index=all_c_options.index(default_colors[i]),
-                                                         key=f'color_option{i}')
+                                                              all_c_options,
+                                                              index=all_c_options.index(default_colors[i]),
+                                                              key=f'color_option{i}')
     num_cond = len(st.session_state['features'])
     rows = int(np.ceil(num_cond / 2))
     mod_ = num_cond % 2
@@ -56,6 +58,17 @@ def condition_plot():
         pie_predict(left_expander,
                     list(st.session_state['features'].keys())[count],
                     behavior_colors)
+        predict_csv = csv_predict(
+            list(st.session_state['features'].keys())[count],
+        )
+
+        left_expander.download_button(
+            label="Download data as CSV",
+            data=predict_csv,
+            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            mime='text/csv',
+            key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+        )
         count += 1
         # right only when multiples of 2 or
         if row == rows - 1:
@@ -65,6 +78,16 @@ def condition_plot():
                 pie_predict(right_expander,
                             list(st.session_state['features'].keys())[count],
                             behavior_colors)
+                predict_csv = csv_predict(
+                    list(st.session_state['features'].keys())[count],
+                )
+                right_expander.download_button(
+                    label="Download data as CSV",
+                    data=predict_csv,
+                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                    mime='text/csv',
+                    key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+                )
                 count += 1
         else:
             right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
@@ -72,4 +95,14 @@ def condition_plot():
             pie_predict(right_expander,
                         list(st.session_state['features'].keys())[count],
                         behavior_colors)
+            predict_csv = csv_predict(
+                list(st.session_state['features'].keys())[count],
+            )
+            right_expander.download_button(
+                label="Download data as CSV",
+                data=predict_csv,
+                file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                mime='text/csv',
+                key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+            )
             count += 1
