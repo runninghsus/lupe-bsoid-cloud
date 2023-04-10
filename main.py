@@ -81,7 +81,7 @@ elif authentication_status:
                     unsafe_allow_html=True)
         if 'user' not in st.session_state:
             st.session_state.user = username
-        st.markdown(f" <h1 style='text-align: center; color: #FF064E; font-size:18px; "
+        st.markdown(f" <h1 style='text-align: center; color: #FF6A95; font-size:18px; "
                     f"font-family:Avenir ;font-weight:normal;'>Hello, {name}!</h1> "
                     , unsafe_allow_html=True)
         selected = option_menu(None, ['home', 'data upload', 'annotate behaviors'],

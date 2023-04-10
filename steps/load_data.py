@@ -24,7 +24,8 @@ def load_view():
     with asoid_t:
         try:
             print(st.session_state['classifier'])
-            text_ = f":orange[reset classifier] in :blue[memory!]"
+            text_ = f":red[**RESET**] classifier in memory!"
+
             def clear_classifier():
                 del st.session_state['classifier']
 
@@ -50,7 +51,8 @@ def load_view():
                 st.experimental_rerun()
         try:
             conditions_list = list(st.session_state['features'].keys())
-            text_ = f":orange[reset data] from conditions: :blue[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]"
+            text_ = f":red[**RESET**] data from conditions: {' & '.join([i.rpartition('_')[2] for i in conditions_list])}!"
+
             def clear_features():
                 del st.session_state['features']
 
@@ -86,7 +88,21 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         try:
-            condition_plot()
+            analysis_chosen = st.radio('analysis method',
+                                       ['ethogram', 'duration pie', 'bout counts', 'bout duration'],
+                                       horizontal=True)
+            if analysis_chosen == 'ethogram':
+                condition_etho_plot()
+            if analysis_chosen == 'duration pie':
+                condition_pie_plot()
+
+            if analysis_chosen == 'bout counts':
+
+                st.write('placeholder for bout counts')
+
+            if analysis_chosen == 'bout duration':
+                st.write('placeholder for bout_durations')
+
         except:
             pass
 
