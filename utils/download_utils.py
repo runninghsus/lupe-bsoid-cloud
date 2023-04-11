@@ -116,3 +116,29 @@ def duration_ridge_csv(condition):
     concat_df = pd.concat([durations_df[f] for f in range(len(durations_df))])
     return convert_df(concat_df)
 
+
+def get_transitions(predict, behavior_classes):
+    class_int = [int(i) for i in behavior_classes]
+    tm = [[0] * np.unique(class_int) for _ in np.unique(class_int)]
+    for (i, j) in zip(predict, predict[1:]):
+        tm[int(i)][int(j)] += 1
+    tm_df = pd.DataFrame(tm)
+    tm_array = np.array(tm)
+    tm_norm = tm_array / tm_array.sum(axis=1)
+    return tm_norm
+
+
+def transmat_csv(condition):
+    transitions_ = []
+    behavior_classes = st.session_state['classifier'].classes_
+    predict = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    for f in range(len(predict)):
+        transitions_.append(get_transitions(predict[f], behavior_classes))
+    mean_transitions = np.mean(transitions_, axis=0)
+    transmat_df = pd.DataFrame(mean_transitions)
+    return convert_df(transmat_df)
+
+
+

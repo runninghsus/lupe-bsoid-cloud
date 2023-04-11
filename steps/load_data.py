@@ -95,22 +95,26 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
+        # condition_transmat_plot()
         try:
             mid_expander = st.expander('Analysis method', expanded=True)
             analysis_chosen = mid_expander.radio('',
-                                       ['ethogram', 'duration pie', 'bout counts', 'bout duration'],
+                                       ['ethogram', 'duration pie', 'bout counts',
+                                        'bout duration', 'transition graphs', 'pose kinematics'],
                                        horizontal=True)
             if analysis_chosen == 'ethogram':
                 condition_etho_plot()
-                # st.write('placeholder for ethogram')
             if analysis_chosen == 'duration pie':
                 condition_pie_plot()
             if analysis_chosen == 'bout counts':
                 condition_bar_plot()
-                # st.write('placeholder for bout counts')
             if analysis_chosen == 'bout duration':
                 condition_ridge_plot()
-                # st.write('placeholder for bout_durations')
+            if analysis_chosen == 'transition graphs':
+                condition_transmat_plot()
+            if analysis_chosen == 'pose kinematics':
+                # condition_kinematix_plot()
+                st.write('placeholder for pose kinematics')
         except:
             pass
 

@@ -137,7 +137,7 @@ def condition_etho_plot():
         left_expander.download_button(
             label="Download data as CSV",
             data=predict_csv,
-            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            file_name=f"predictions_{list(st.session_state['features'].keys())[count]}.csv",
             mime='text/csv',
             key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
         )
@@ -157,7 +157,7 @@ def condition_etho_plot():
                 right_expander.download_button(
                     label="Download data as CSV",
                     data=predict_csv,
-                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                    file_name=f"predictions_{list(st.session_state['features'].keys())[count]}.csv",
                     mime='text/csv',
                     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
                 )
@@ -175,7 +175,7 @@ def condition_etho_plot():
             right_expander.download_button(
                 label="Download data as CSV",
                 data=predict_csv,
-                file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                file_name=f"predictions_{list(st.session_state['features'].keys())[count]}.csv",
                 mime='text/csv',
                 key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
             )
@@ -272,7 +272,7 @@ def condition_pie_plot():
         left_expander.download_button(
             label="Download data as CSV",
             data=predict_csv,
-            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            file_name=f"total_durations_{list(st.session_state['features'].keys())[count]}.csv",
             mime='text/csv',
             key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
         )
@@ -291,7 +291,7 @@ def condition_pie_plot():
                 right_expander.download_button(
                     label="Download data as CSV",
                     data=predict_csv,
-                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                    file_name=f"total_durations_{list(st.session_state['features'].keys())[count]}.csv",
                     mime='text/csv',
                     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
                 )
@@ -308,7 +308,7 @@ def condition_pie_plot():
             right_expander.download_button(
                 label="Download data as CSV",
                 data=predict_csv,
-                file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                file_name=f"total_durations_{list(st.session_state['features'].keys())[count]}.csv",
                 mime='text/csv',
                 key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
             )
@@ -397,7 +397,7 @@ def condition_bar_plot():
         left_expander.download_button(
             label="Download data as CSV",
             data=bar_csv,
-            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            file_name=f"bouts_{list(st.session_state['features'].keys())[count]}.csv",
             mime='text/csv',
             key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
         )
@@ -416,7 +416,7 @@ def condition_bar_plot():
                 right_expander.download_button(
                     label="Download data as CSV",
                     data=bar_csv,
-                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                    file_name=f"bouts_{list(st.session_state['features'].keys())[count]}.csv",
                     mime='text/csv',
                     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
                 )
@@ -433,7 +433,7 @@ def condition_bar_plot():
             right_expander.download_button(
                 label="Download data as CSV",
                 data=bar_csv,
-                file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                file_name=f"bouts_{list(st.session_state['features'].keys())[count]}.csv",
                 mime='text/csv',
                 key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
             )
@@ -543,7 +543,7 @@ def condition_ridge_plot():
         left_expander.download_button(
             label="Download data as CSV",
             data=ridge_csv,
-            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            file_name=f"bout_durations_{list(st.session_state['features'].keys())[count]}.csv",
             mime='text/csv',
             key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
         )
@@ -562,7 +562,7 @@ def condition_ridge_plot():
                 right_expander.download_button(
                     label="Download data as CSV",
                     data=ridge_csv,
-                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                    file_name=f"bout_durations_{list(st.session_state['features'].keys())[count]}.csv",
                     mime='text/csv',
                     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
                 )
@@ -571,6 +571,247 @@ def condition_ridge_plot():
             right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                 expanded=True)
             ridge_predict(right_expander,
+                          list(st.session_state['features'].keys())[count],
+                          behavior_colors)
+            ridge_csv = duration_ridge_csv(
+                list(st.session_state['features'].keys())[count],
+            )
+            right_expander.download_button(
+                label="Download data as CSV",
+                data=ridge_csv,
+                file_name=f"bout_durations_{list(st.session_state['features'].keys())[count]}.csv",
+                mime='text/csv',
+                key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+            )
+            count += 1
+
+
+def transmat_predict(placeholder, condition, heatmap_color_scheme):
+    behavior_classes = st.session_state['classifier'].classes_
+    names = [f'behavior {int(key)}' for key in behavior_classes]
+    predict = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    with placeholder:
+        transitions_ = []
+        for file_idx in range(len(predict)):
+            transitions_.append(get_transitions(predict[file_idx], behavior_classes))
+        mean_transitions = np.mean(transitions_, axis=0)
+        fig = px.imshow(mean_transitions,
+                        color_continuous_scale=heatmap_color_scheme,
+                        aspect='equal')
+        fig.update_layout(
+            yaxis=dict(
+                tickmode='array',
+                tickvals=behavior_classes,
+                ticktext=names),
+            xaxis = dict(
+            tickmode='array',
+            tickvals=behavior_classes,
+            ticktext=names)
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+
+
+def condition_transmat_plot():
+    figure_container = st.container()
+    option_expander = st.expander("Configure colors",
+                                  expanded=True)
+    named_colorscales = px.colors.named_colorscales()
+    col1, col2 = option_expander.columns([3, 1])
+    heatmap_color_scheme = col1.selectbox(f'select colormap for heatmap',
+                                                     named_colorscales,
+                                                     index=named_colorscales.index('agsunset'),
+                                                     key='color_scheme')
+    col2.write('')
+    col2.write('')
+    if col2.checkbox('reverse?'):
+        heatmap_color_scheme = str.join('', (heatmap_color_scheme, '_r'))
+    num_cond = len(st.session_state['features'])
+    rows = int(np.ceil(num_cond / 2))
+    mod_ = num_cond % 2
+    count = 0
+    for row in range(rows):
+        left_col, right_col = figure_container.columns(2)
+        # left stays
+        left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
+                                          expanded=True)
+        transmat_predict(left_expander,
+                      list(st.session_state['features'].keys())[count],
+                      heatmap_color_scheme)
+        ridge_csv = transmat_csv(
+            list(st.session_state['features'].keys())[count],
+        )
+        left_expander.download_button(
+            label="Download data as CSV",
+            data=ridge_csv,
+            file_name=f"transitions_{list(st.session_state['features'].keys())[count]}.csv",
+            mime='text/csv',
+            key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+        )
+        count += 1
+        # right only when multiples of 2 or
+        if row == rows - 1:
+            if mod_ == 0:
+                right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                    expanded=True)
+                transmat_predict(right_expander,
+                              list(st.session_state['features'].keys())[count],
+                              heatmap_color_scheme)
+                ridge_csv = transmat_csv(
+                    list(st.session_state['features'].keys())[count],
+                )
+                right_expander.download_button(
+                    label="Download data as CSV",
+                    data=ridge_csv,
+                    file_name=f"transitions_{list(st.session_state['features'].keys())[count]}.csv",
+                    mime='text/csv',
+                    key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+                )
+                count += 1
+        else:
+            right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                expanded=True)
+            transmat_predict(right_expander,
+                          list(st.session_state['features'].keys())[count],
+                          heatmap_color_scheme)
+            ridge_csv = transmat_csv(
+                list(st.session_state['features'].keys())[count],
+            )
+            right_expander.download_button(
+                label="Download data as CSV",
+                data=ridge_csv,
+                file_name=f"transitions_{list(st.session_state['features'].keys())[count]}.csv",
+                mime='text/csv',
+                key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+            )
+            count += 1
+
+
+def kinematix_predict(placeholder, condition, behavior_colors):
+    behavior_classes = st.session_state['classifier'].classes_
+    predict = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    with placeholder:
+
+        ridge_placeholder = st.empty()
+        colL, colR = st.columns(2)
+        if len(predict) == 1:
+            colL.markdown(':orange[1] file only')
+            f_select = 0
+        else:
+            f_select = colL.slider('select file to generate ridge plot',
+                                   min_value=1, max_value=len(predict), value=1,
+                                   key=f'ridge_slider_{condition}')
+        file_chosen = f_select - 1
+        duration_ = []
+        for file_idx in range(len(predict)):
+            duration_.append(get_duration_bouts(predict[file_idx], behavior_classes))
+        colors = [mcolors.to_hex(i) for i in list(behavior_colors.values())]
+        duration_matrix = boolean_indexing(duration_[file_chosen])
+        max_dur = colR.slider('max duration',
+                              min_value=0, max_value=int(np.nanmax(np.array(duration_matrix))),
+                              value=int(np.nanmax(np.array(duration_matrix) * 0.7)),
+                              key=f'maxdur_slider_{condition}')
+
+        fig = go.Figure()
+        names = [f'behavior {int(key)}' for key in behavior_classes]
+        for data_line, color, name in zip(duration_matrix, colors, names):
+            fig.add_trace(go.Violin(x=data_line, line_color=color, name=name))
+        fig.update_traces(
+            orientation='h', side='positive', width=3, points=False,
+        )
+        fig.update_layout(xaxis_showgrid=False, xaxis_zeroline=False, xaxis_range=[0, max_dur])
+        ridge_placeholder.plotly_chart(fig, use_container_width=True)
+
+
+def condition_kinematix_plot():
+    behavior_classes = st.session_state['classifier'].classes_
+    figure_container = st.container()
+    option_expander = st.expander("Configure colors",
+                                  expanded=True)
+    behavior_colors = {key: [] for key in behavior_classes}
+    all_c_options = list(mcolors.CSS4_COLORS.keys())
+    np.random.seed(42)
+    selected_idx = np.random.choice(np.arange(len(all_c_options)),
+                                    len(behavior_classes),
+                                    replace=False)
+    default_colors = [all_c_options[s] for s in selected_idx]
+    col1, col2, col3, col4 = option_expander.columns(4)
+    for i, class_id in enumerate(behavior_classes):
+        if i % 4 == 0:
+            behavior_colors[class_id] = col1.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+
+        elif i % 4 == 1:
+            behavior_colors[class_id] = col2.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+        elif i % 4 == 2:
+            behavior_colors[class_id] = col3.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+        elif i % 4 == 3:
+            behavior_colors[class_id] = col4.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+    num_cond = len(st.session_state['features'])
+    rows = int(np.ceil(num_cond / 2))
+    mod_ = num_cond % 2
+    count = 0
+    for row in range(rows):
+        left_col, right_col = figure_container.columns(2)
+        # left stays
+        left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
+                                          expanded=True)
+        kinematix_predict(left_expander,
+                      list(st.session_state['features'].keys())[count],
+                      behavior_colors)
+        ridge_csv = duration_ridge_csv(
+            list(st.session_state['features'].keys())[count],
+        )
+        left_expander.download_button(
+            label="Download data as CSV",
+            data=ridge_csv,
+            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            mime='text/csv',
+            key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+        )
+        count += 1
+        # right only when multiples of 2 or
+        if row == rows - 1:
+            if mod_ == 0:
+                right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                    expanded=True)
+                kinematix_predict(right_expander,
+                              list(st.session_state['features'].keys())[count],
+                              behavior_colors)
+                ridge_csv = duration_ridge_csv(
+                    list(st.session_state['features'].keys())[count],
+                )
+                right_expander.download_button(
+                    label="Download data as CSV",
+                    data=ridge_csv,
+                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                    mime='text/csv',
+                    key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+                )
+                count += 1
+        else:
+            right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                expanded=True)
+            kinematix_predict(right_expander,
                           list(st.session_state['features'].keys())[count],
                           behavior_colors)
             ridge_csv = duration_ridge_csv(
