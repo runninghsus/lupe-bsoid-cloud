@@ -26,7 +26,7 @@ def get_bodyparts(placeholder, data_raw):
         index = [i for i, s in enumerate(data_raw[0][0, :]) if a in s][:2]
         if index not in pose_chosen:
             pose_chosen += index
-    return pose_chosen
+    return p, pose_chosen
 
 
 class csv_upload():
@@ -51,7 +51,7 @@ class csv_upload():
     def main(self):
         self.filter_files()
         self.process()
-        return self.features
+        return self.data_filtered, self.features
 
 
 def condition_prompt(uploaded_files, num_cond):

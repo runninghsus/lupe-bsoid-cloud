@@ -67,6 +67,7 @@ def load_view():
         except:
             num_cond = st.number_input('How many conditions?', min_value=2, max_value=10, value=2)
             uploaded_files = {f'condition_{key}': [] for key in range(num_cond)}
+            pose = {f'condition_{key}': [] for key in range(num_cond)}
             features = {f'condition_{key}': [] for key in range(num_cond)}
             condition_prompt(uploaded_files, num_cond)
             try:
@@ -75,7 +76,10 @@ def load_view():
                     placeholder = st.empty()
                     data_raw.append(read_csvfiles(uploaded_files[condition]))
                     if i == 0:
-                        pose_chosen = get_bodyparts(placeholder, data_raw[i])
+                        p, pose_chosen = get_bodyparts(placeholder, data_raw[i])
+                        if 'bodypart_names' not in st.session_state or 'bodypart' not in st.session_state:
+                            st.session_state['bodypart_names'] = p
+                            st.session_state['bodypart'] = pose_chosen
                 conditions_list = list(uploaded_files.keys())
                 if st.button(f"extract features from conditions: "
                              f"{' & '.join([i.rpartition('_')[2] for i in conditions_list])}"):
@@ -84,18 +88,23 @@ def load_view():
                                   desc=f"Extracting spatiotemporal features from "
                                        f"{' & '.join([i.rpartition('_')[2] for i in conditions_list])}")):
                         loader = csv_upload(data_raw[i], pose_chosen, condition, framerate=30)
-                        features[condition] = loader.main()
+                        pose[condition], features[condition] = loader.main()
+                    if 'pose' not in st.session_state:
+                        st.session_state['pose'] = pose
                     if 'features' not in st.session_state:
                         st.session_state['features'] = features
                     st.markdown(f":blue[saved features] from conditions: "
                                 f":orange[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]")
-                    # pickle.dump(st.session_state['features'], open('./data/demo.pkl', 'wb'))
+                    # pickle.dump(st.session_state['bodypart_names'], open('./data/demo_bodypart_name.pkl', 'wb'))
+                    # pickle.dump(st.session_state['bodypart'], open('./data/demo_bodypart_idx.pkl', 'wb'))
+                    # pickle.dump(st.session_state['pose'], open('./data/demo_pose.pkl', 'wb'))
+                    # pickle.dump(st.session_state['features'], open('./data/demo_feats.pkl', 'wb'))
             except:
                 pass
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_transmat_plot()
+        # condition_kinematix_plot()
         try:
             mid_expander = st.expander('Analysis method', expanded=True)
             analysis_chosen = mid_expander.radio('',
@@ -113,8 +122,8 @@ def load_view():
             if analysis_chosen == 'transition graphs':
                 condition_transmat_plot()
             if analysis_chosen == 'pose kinematics':
-                # condition_kinematix_plot()
-                st.write('placeholder for pose kinematics')
+                condition_kinematix_plot()
+                # st.write('placeholder for pose kinematics')
         except:
             pass
 

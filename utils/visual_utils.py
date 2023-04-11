@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.colors as mcolors
 import plotly.graph_objects as go
 from utils.download_utils import *
+from utils.feature_utils import *
 import plotly.express as px
 
 import matplotlib.pyplot as plt
@@ -120,7 +121,7 @@ def condition_etho_plot():
     count = 0
     length_ = length_container.slider('number of frames',
                                       min_value=25, max_value=250,
-                                      value=100,
+                                      value=75,
                                       key=f'length_slider')
     for row in range(rows):
         left_col, right_col = figure_container.columns(2)
@@ -330,13 +331,12 @@ def bar_predict(placeholder, condition, behavior_colors):
         names = [f'behavior {int(key)}' for key in behavior_classes]
         fig = go.Figure()
         fig.add_trace(go.Bar(
-            # name=f'{condition}',
             x=names, y=bout_mean,
             error_y=dict(type='data', array=bout_std),
             width=0.5,
-            marker_color=pd.Series(behavior_colors))
+            marker_color=pd.Series(behavior_colors),
+            marker_line=dict(width=1.2, color='black'))
         )
-        fig.update_layout()
         bar_placeholder.plotly_chart(fig, use_container_width=True)
 
 
@@ -454,27 +454,24 @@ def ridge_predict(placeholder, condition, behavior_colors):
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
-
         ridge_placeholder = st.empty()
-        colL, colR = st.columns(2)
-        if len(predict) == 1:
-            colL.markdown(':orange[1] file only')
-            f_select = 0
-        else:
-            f_select = colL.slider('select file to generate ridge plot',
-                                   min_value=1, max_value=len(predict), value=1,
-                                   key=f'ridge_slider_{condition}')
-        file_chosen = f_select - 1
         duration_ = []
         for file_idx in range(len(predict)):
             duration_.append(get_duration_bouts(predict[file_idx], behavior_classes))
         colors = [mcolors.to_hex(i) for i in list(behavior_colors.values())]
-        duration_matrix = boolean_indexing(duration_[file_chosen])
-        max_dur = colR.slider('max duration',
-                              min_value=0, max_value=int(np.nanmax(np.array(duration_matrix))),
-                              value=int(np.nanmax(np.array(duration_matrix) * 0.7)),
-                              key=f'maxdur_slider_{condition}')
-
+        for file_chosen in range(len(duration_)):
+            if file_chosen == 0:
+                duration_matrix = boolean_indexing(duration_[file_chosen])
+            else:
+                duration_matrix = np.hstack((duration_matrix, boolean_indexing(duration_[file_chosen])))
+        max_dur = st.slider('max duration',
+                            min_value=0,
+                            max_value=int(
+                                np.percentile(np.array(duration_matrix)[~np.isnan(np.array(duration_matrix))],
+                                              99)),
+                            value=int(np.percentile(np.array(duration_matrix)[~np.isnan(np.array(duration_matrix))],
+                                                    95)),
+                            key=f'maxdur_slider_{condition}')
         fig = go.Figure()
         names = [f'behavior {int(key)}' for key in behavior_classes]
         for data_line, color, name in zip(duration_matrix, colors, names):
@@ -599,19 +596,19 @@ def transmat_predict(placeholder, condition, heatmap_color_scheme):
         mean_transitions = np.mean(transitions_, axis=0)
         fig = px.imshow(mean_transitions,
                         color_continuous_scale=heatmap_color_scheme,
-                        aspect='equal')
+                        aspect='equal'
+                        )
         fig.update_layout(
             yaxis=dict(
                 tickmode='array',
                 tickvals=behavior_classes,
                 ticktext=names),
-            xaxis = dict(
-            tickmode='array',
-            tickvals=behavior_classes,
-            ticktext=names)
+            xaxis=dict(
+                tickmode='array',
+                tickvals=behavior_classes,
+                ticktext=names)
         )
         st.plotly_chart(fig, use_container_width=True)
-
 
 
 def condition_transmat_plot():
@@ -621,9 +618,9 @@ def condition_transmat_plot():
     named_colorscales = px.colors.named_colorscales()
     col1, col2 = option_expander.columns([3, 1])
     heatmap_color_scheme = col1.selectbox(f'select colormap for heatmap',
-                                                     named_colorscales,
-                                                     index=named_colorscales.index('agsunset'),
-                                                     key='color_scheme')
+                                          named_colorscales,
+                                          index=named_colorscales.index('agsunset'),
+                                          key='color_scheme')
     col2.write('')
     col2.write('')
     if col2.checkbox('reverse?'):
@@ -638,8 +635,8 @@ def condition_transmat_plot():
         left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
                                           expanded=True)
         transmat_predict(left_expander,
-                      list(st.session_state['features'].keys())[count],
-                      heatmap_color_scheme)
+                         list(st.session_state['features'].keys())[count],
+                         heatmap_color_scheme)
         ridge_csv = transmat_csv(
             list(st.session_state['features'].keys())[count],
         )
@@ -657,8 +654,8 @@ def condition_transmat_plot():
                 right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                     expanded=True)
                 transmat_predict(right_expander,
-                              list(st.session_state['features'].keys())[count],
-                              heatmap_color_scheme)
+                                 list(st.session_state['features'].keys())[count],
+                                 heatmap_color_scheme)
                 ridge_csv = transmat_csv(
                     list(st.session_state['features'].keys())[count],
                 )
@@ -674,8 +671,8 @@ def condition_transmat_plot():
             right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                 expanded=True)
             transmat_predict(right_expander,
-                          list(st.session_state['features'].keys())[count],
-                          heatmap_color_scheme)
+                             list(st.session_state['features'].keys())[count],
+                             heatmap_color_scheme)
             ridge_csv = transmat_csv(
                 list(st.session_state['features'].keys())[count],
             )
@@ -691,40 +688,106 @@ def condition_transmat_plot():
 
 def kinematix_predict(placeholder, condition, behavior_colors):
     behavior_classes = st.session_state['classifier'].classes_
+    names = [f'behavior {int(key)}' for key in behavior_classes]
+    # st.write(names[0])
+    pose = st.session_state['pose'][condition]
+    file_chosen = 0
     predict = []
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
-
-        ridge_placeholder = st.empty()
+        dist_tab, dur_tab, speed_tab = st.tabs(['trajectory distance', 'duration', 'average speed'])
         colL, colR = st.columns(2)
-        if len(predict) == 1:
-            colL.markdown(':orange[1] file only')
-            f_select = 0
-        else:
-            f_select = colL.slider('select file to generate ridge plot',
-                                   min_value=1, max_value=len(predict), value=1,
-                                   key=f'ridge_slider_{condition}')
-        file_chosen = f_select - 1
-        duration_ = []
-        for file_idx in range(len(predict)):
-            duration_.append(get_duration_bouts(predict[file_idx], behavior_classes))
-        colors = [mcolors.to_hex(i) for i in list(behavior_colors.values())]
-        duration_matrix = boolean_indexing(duration_[file_chosen])
-        max_dur = colR.slider('max duration',
-                              min_value=0, max_value=int(np.nanmax(np.array(duration_matrix))),
-                              value=int(np.nanmax(np.array(duration_matrix) * 0.7)),
-                              key=f'maxdur_slider_{condition}')
+        # kinematix_placeholder = st.empty()
+        # if len(predict) == 1:
+        #     colL.markdown(':orange[1] file only')
+        #     f_select = 0
+        # else:
+        #     f_select = colL.slider('select file to examine summary kinematics',
+        #                            min_value=1, max_value=len(predict), value=1,
+        #                            key=f'ethogram_slider_{condition}')
+        # file_chosen = f_select - 1
+        bp_select = colL.radio('select body part',
+                               st.session_state['bodypart_names'],
+                               key=f'bodypart_radio_{condition}')
+        bodypart = st.session_state['bodypart_names'].index(bp_select)
+        bout_disp_all = []
+        bout_duration_all = []
+        bout_avg_speed_all = []
+        for file_chosen in range(len(predict)):
+            behavior, behavioral_start_time, behavior_duration, bout_disp, bout_duration, bout_avg_speed = \
+                get_avg_kinematics(predict[file_chosen], pose[file_chosen], names, bodypart, framerate=10)
+            bout_disp_all.append(bout_disp)
+            bout_duration_all.append(bout_duration)
+            bout_avg_speed_all.append(bout_avg_speed)
 
-        fig = go.Figure()
-        names = [f'behavior {int(key)}' for key in behavior_classes]
-        for data_line, color, name in zip(duration_matrix, colors, names):
-            fig.add_trace(go.Violin(x=data_line, line_color=color, name=name))
-        fig.update_traces(
-            orientation='h', side='positive', width=3, points=False,
-        )
-        fig.update_layout(xaxis_showgrid=False, xaxis_zeroline=False, xaxis_range=[0, max_dur])
-        ridge_placeholder.plotly_chart(fig, use_container_width=True)
+
+        behavioral_sums = {key: [] for key in names}
+        behavioral_dur = {key: [] for key in names}
+        behavioral_speed = {key: [] for key in names}
+
+        # sum over bouts
+        # file, behav, instance
+        with dist_tab:
+            for b, behav in enumerate(behavioral_sums.keys()):
+                for f in range(len(bout_disp_all)):
+                    if f == 0:
+                        behavioral_sums[behav] = [np.sum(bout_disp_all[f][b][inst])
+                                                  for inst in range(len(bout_disp_all[f][b]))]
+                    else:
+                        behavioral_sums[behav] = np.hstack((behavioral_sums[behav],
+                                                            [np.sum(bout_disp_all[f][b][inst])
+                                                             for inst in range(len(bout_disp_all[f][b]))]
+                                                            ))
+            fig = go.Figure()
+            for b, behav in enumerate(behavioral_sums.keys()):
+                fig.add_trace(go.Violin(
+                    y=behavioral_sums[behav],
+                    name=behav,
+                    line_color=behavior_colors[b],
+                    box_visible=True,
+                    meanline_visible=True))
+            st.plotly_chart(fig, use_container_width=True)
+        with dur_tab:
+            for b, behav in enumerate(behavioral_dur.keys()):
+                for f in range(len(bout_disp_all)):
+                    if f == 0:
+                        behavioral_dur[behav] = [np.sum(bout_duration_all[f][b][inst])
+                                                  for inst in range(len(bout_duration_all[f][b]))]
+                    else:
+                        behavioral_dur[behav] = np.hstack((behavioral_sums[behav],
+                                                            [np.sum(bout_duration_all[f][b][inst])
+                                                             for inst in range(len(bout_duration_all[f][b]))]
+                                                            ))
+            fig = go.Figure()
+            for b, behav in enumerate(behavioral_dur.keys()):
+                fig.add_trace(go.Violin(
+                    y=behavioral_dur[behav],
+                    name=behav,
+                    line_color=behavior_colors[b],
+                    box_visible=True,
+                    meanline_visible=True))
+            st.plotly_chart(fig, use_container_width=True)
+        with speed_tab:
+            for b, behav in enumerate(behavioral_speed.keys()):
+                for f in range(len(bout_avg_speed_all)):
+                    if f == 0:
+                        behavioral_speed[behav] = [np.sum(bout_avg_speed_all[f][b][inst])
+                                                  for inst in range(len(bout_avg_speed_all[f][b]))]
+                    else:
+                        behavioral_speed[behav] = np.hstack((behavioral_sums[behav],
+                                                            [np.sum(bout_avg_speed_all[f][b][inst])
+                                                             for inst in range(len(bout_avg_speed_all[f][b]))]
+                                                            ))
+            fig = go.Figure()
+            for b, behav in enumerate(behavioral_speed.keys()):
+                fig.add_trace(go.Violin(
+                    y=behavioral_speed[behav],
+                    name=behav,
+                    line_color=behavior_colors[b],
+                    box_visible=True,
+                    meanline_visible=True))
+            st.plotly_chart(fig, use_container_width=True)
 
 
 def condition_kinematix_plot():
@@ -776,8 +839,8 @@ def condition_kinematix_plot():
         left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
                                           expanded=True)
         kinematix_predict(left_expander,
-                      list(st.session_state['features'].keys())[count],
-                      behavior_colors)
+                          list(st.session_state['features'].keys())[count],
+                          behavior_colors)
         ridge_csv = duration_ridge_csv(
             list(st.session_state['features'].keys())[count],
         )
@@ -795,8 +858,8 @@ def condition_kinematix_plot():
                 right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                     expanded=True)
                 kinematix_predict(right_expander,
-                              list(st.session_state['features'].keys())[count],
-                              behavior_colors)
+                                  list(st.session_state['features'].keys())[count],
+                                  behavior_colors)
                 ridge_csv = duration_ridge_csv(
                     list(st.session_state['features'].keys())[count],
                 )
@@ -812,8 +875,8 @@ def condition_kinematix_plot():
             right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
                                                 expanded=True)
             kinematix_predict(right_expander,
-                          list(st.session_state['features'].keys())[count],
-                          behavior_colors)
+                              list(st.session_state['features'].keys())[count],
+                              behavior_colors)
             ridge_csv = duration_ridge_csv(
                 list(st.session_state['features'].keys())[count],
             )

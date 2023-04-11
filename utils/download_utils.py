@@ -141,4 +141,11 @@ def transmat_csv(condition):
     return convert_df(transmat_df)
 
 
-
+def get_bouts(predict, behavior_classes):
+    bout_counts = []
+    bout_start_idx = np.where(np.diff(np.hstack([-1, predict])) != 0)[0]
+    bout_start_label = predict[bout_start_idx]
+    for b in behavior_classes:
+        idx_b = np.where(bout_start_label == int(b))[0]
+        idx_b
+    # return tm_norm
