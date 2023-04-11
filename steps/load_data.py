@@ -35,8 +35,14 @@ def load_view():
             if st.checkbox('use demo model and data'):
                 with open('./models/demo.pkl', 'rb') as fr:
                     st.session_state['classifier'] = pickle.load(fr)
-                with open('./data/demo.pkl', 'rb') as fr:
+                with open('./data/demo_feats.pkl', 'rb') as fr:
                     st.session_state['features'] = pickle.load(fr)
+                with open('./data/demo_pose.pkl', 'rb') as fr:
+                    st.session_state['pose'] = pickle.load(fr)
+                with open('./data/demo_bodypart_name.pkl', 'rb') as fr:
+                    st.session_state['bodypart_name'] = pickle.load(fr)
+                with open('./data/demo_bodypart_idx.pkl', 'rb') as fr:
+                    st.session_state['bodypart'] = pickle.load(fr)
             file1, file2 = st.columns(2)
             feats_targets_file = file1.file_uploader('Upload your feats_targets.sav',
                                                      accept_multiple_files=False,
