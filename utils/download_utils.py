@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from utils.feature_utils import get_avg_kinematics
 
 
 @st.cache_data
@@ -125,7 +126,7 @@ def get_transitions(predict, behavior_classes):
     tm_df = pd.DataFrame(tm)
     tm_array = np.array(tm)
     tm_norm = tm_array / tm_array.sum(axis=1)
-    return tm_norm
+    return tm_array, tm_norm
 
 
 def transmat_csv(condition):
@@ -135,17 +136,51 @@ def transmat_csv(condition):
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     for f in range(len(predict)):
-        transitions_.append(get_transitions(predict[f], behavior_classes))
+        count_tm, prob_tm = get_transitions(predict[f], behavior_classes)
+        transitions_.append(prob_tm)
     mean_transitions = np.mean(transitions_, axis=0)
     transmat_df = pd.DataFrame(mean_transitions)
     return convert_df(transmat_df)
 
 
-def get_bouts(predict, behavior_classes):
-    bout_counts = []
-    bout_start_idx = np.where(np.diff(np.hstack([-1, predict])) != 0)[0]
-    bout_start_label = predict[bout_start_idx]
-    for b in behavior_classes:
-        idx_b = np.where(bout_start_label == int(b))[0]
-        idx_b
-    # return tm_norm
+def kinematics_csv(condition, bp_selects):
+
+    predict_dict = {key: [] for key in range(len(st.session_state['features'][condition]))}
+    behavior_classes = st.session_state['classifier'].classes_
+    names = [f'behavior {int(key)}' for key in behavior_classes]
+    pose = st.session_state['pose'][condition]
+    kinematics_df = []
+    predict = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+        bout_disp_bps = []
+        bout_duration_bps = []
+        bout_avg_speed_bps = []
+        for bp_select in bp_selects:
+            bodypart = st.session_state['bodypart_names'].index(bp_select)
+            bout_disp_all = []
+            bout_duration_all = []
+            bout_avg_speed_all = []
+            for file_chosen in range(len(predict)):
+                behavior, behavioral_start_time, behavior_duration, bout_disp, bout_duration, bout_avg_speed = \
+                    get_avg_kinematics(predict[file_chosen], pose[file_chosen], bodypart, framerate=10)
+                bout_disp_all.append(bout_disp)
+                bout_duration_all.append(bout_duration)
+                bout_avg_speed_all.append(bout_avg_speed)
+            bout_disp_bps.append(bout_disp_all)
+            bout_duration_bps.append(bout_duration_all)
+            bout_avg_speed_bps.append(bout_avg_speed_all)
+        # TODO: create dictionary with kineamtics
+        # predict_dict[f] = {'condition': np.hstack([np.repeat(condition, len(durations_[f][i]))
+        #                                            for i in range(len(durations_[f]))]),
+        #                    'file': np.hstack([np.repeat(f, len(durations_[f][i]))
+        #                                       for i in range(len(durations_[f]))]),
+        #                    'behavior': np.hstack([np.repeat(behavior_classes[i],
+        #                                           len(durations_[f][i])) for i in range(len(durations_[f]))]),
+        #                    'distance': np.hstack(bout_disp_bps),
+        #                    'duration':
+        #                    'duration':
+        #                    }
+        kinematics_df.append(pd.DataFrame(predict_dict[f]))
+    concat_df = pd.concat([kinematics_df[f] for f in range(len(kinematics_df))])
+    return convert_df(concat_df)

@@ -6,6 +6,8 @@ import plotly.graph_objects as go
 from utils.download_utils import *
 from utils.feature_utils import *
 import plotly.express as px
+import networkx as nx
+import matplotlib as mpl
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -45,7 +47,7 @@ def ethogram_plot(condition, new_predictions, behavior_names, behavior_colors, l
         rand_start = np.random.choice(prefill_array.shape[0] - length_, 1, replace=False)
         ax.imshow(prefill_array[int(rand_start):int(rand_start + length_), :].T, cmap=cmap_)
         ax.set_xticks(np.arange(0, length_, int(length_ / 5)))
-        ax.set_xticklabels(np.arange(int(rand_start), int(rand_start + length_), int(length_ / 5))/10)
+        ax.set_xticklabels(np.arange(int(rand_start), int(rand_start + length_), int(length_ / 5)) / 10)
         ax.set_xlabel('seconds')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -53,7 +55,7 @@ def ethogram_plot(condition, new_predictions, behavior_names, behavior_colors, l
         rand_start = 0
         ax.imshow(prefill_array[rand_start:rand_start + length_, :].T, cmap=cmap_)
         ax.set_xticks(np.arange(rand_start, length_, int(length_ / 5)))
-        ax.set_xticklabels(np.arange(0, length_, int(length_ / 5))/10)
+        ax.set_xticklabels(np.arange(0, length_, int(length_ / 5)) / 10)
         ax.set_xlabel('seconds')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -265,12 +267,12 @@ def condition_pie_plot():
         pie_predict(left_expander,
                     list(st.session_state['features'].keys())[count],
                     behavior_colors)
-        predict_csv = duration_pie_csv(
+        totaldur_csv = duration_pie_csv(
             list(st.session_state['features'].keys())[count],
         )
         left_expander.download_button(
             label="Download data as CSV",
-            data=predict_csv,
+            data=totaldur_csv,
             file_name=f"total_durations_{list(st.session_state['features'].keys())[count]}.csv",
             mime='text/csv',
             key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
@@ -284,12 +286,12 @@ def condition_pie_plot():
                 pie_predict(right_expander,
                             list(st.session_state['features'].keys())[count],
                             behavior_colors)
-                predict_csv = duration_pie_csv(
+                totaldur_csv = duration_pie_csv(
                     list(st.session_state['features'].keys())[count],
                 )
                 right_expander.download_button(
                     label="Download data as CSV",
-                    data=predict_csv,
+                    data=totaldur_csv,
                     file_name=f"total_durations_{list(st.session_state['features'].keys())[count]}.csv",
                     mime='text/csv',
                     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
@@ -301,12 +303,12 @@ def condition_pie_plot():
             pie_predict(right_expander,
                         list(st.session_state['features'].keys())[count],
                         behavior_colors)
-            predict_csv = duration_pie_csv(
+            totaldur_csv = duration_pie_csv(
                 list(st.session_state['features'].keys())[count],
             )
             right_expander.download_button(
                 label="Download data as CSV",
-                data=predict_csv,
+                data=totaldur_csv,
                 file_name=f"total_durations_{list(st.session_state['features'].keys())[count]}.csv",
                 mime='text/csv',
                 key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
@@ -334,7 +336,7 @@ def bar_predict(placeholder, condition, behavior_colors):
             marker_color=pd.Series(behavior_colors),
             marker_line=dict(width=1.2, color='black'))
         )
-        y_max = np.max(bout_mean+bout_std)
+        y_max = np.max(bout_mean + bout_std)
         max_counts = st.slider('behavioral instance counts y limit',
                                min_value=0,
                                max_value=int(y_max) * 2,
@@ -599,7 +601,8 @@ def transmat_predict(placeholder, condition, heatmap_color_scheme):
     with placeholder:
         transitions_ = []
         for file_idx in range(len(predict)):
-            transitions_.append(get_transitions(predict[file_idx], behavior_classes))
+            count_tm, prob_tm = get_transitions(predict[file_idx], behavior_classes)
+            transitions_.append(prob_tm)
         mean_transitions = np.mean(transitions_, axis=0)
         fig = px.imshow(mean_transitions,
                         color_continuous_scale=heatmap_color_scheme,
@@ -616,6 +619,73 @@ def transmat_predict(placeholder, condition, heatmap_color_scheme):
                 ticktext=names)
         )
         st.plotly_chart(fig, use_container_width=True)
+
+
+def directedgraph_predict(placeholder, condition, heatmap_color_scheme):
+    behavior_classes = st.session_state['classifier'].classes_
+    names = [f'behavior {int(key)}' for key in behavior_classes]
+    predict = []
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    with placeholder:
+        transitions_count = []
+        transitions_prob = []
+        for file_idx in range(len(predict)):
+            count_tm, prob_tm = get_transitions(predict[file_idx], behavior_classes)
+            transitions_count.append(count_tm)
+            transitions_prob.append(prob_tm)
+        transition_count_mean = np.nanmean(transitions_count, axis=0)
+        transitions_prob_mean = np.nanmean(transitions_prob, axis=0)
+        diag = [transition_count_mean[i][i] for i in range(len(transition_count_mean))]
+        diag_p = np.array(diag) / np.array(diag).max()
+        # keep diag to provide information about relative behavioral duration
+        # scale it by 50, works well, and save it as a global variable
+        node_sizes = [50 * i for i in diag_p]
+        ## transition matrix from 2d array into numpy matrix for networkx
+        transition_prob_raw = np.matrix(transitions_prob_mean)
+        # replace diagonal with 0
+        np.fill_diagonal(transition_prob_raw, 0)
+        transition_prob_norm = transition_prob_raw / transition_prob_raw.sum(axis=1)
+        nan_indices = np.isnan(transition_prob_norm)
+        transition_prob_norm[nan_indices] = 0
+
+        fig = plt.figure()
+        # particular networkx graph
+        graph = nx.from_numpy_array(transition_prob_norm, create_using=nx.MultiDiGraph())
+        # set node position with seed 0 for reproducibility
+        node_position = nx.layout.spring_layout(graph, seed=0)
+        # edge colors is equivalent to the weight
+        edge_colors = [graph[u][v][0].get('weight') for u, v in graph.edges()]
+        # TODO: try to find a way to fix vmin vmax in directed graph
+        # c_max = np.max(edge_colors)
+        # max_c = st.slider('color axis limit',
+        #                   min_value=0.0,
+        #                   max_value=1.0,
+        #                   value=np.float(c_max),
+        #                   key=f'max_color_slider_{condition}')
+
+        # node is dependent on the self transitions, which is defined in compute dynamics above, use blue colormap
+        nodes = nx.draw_networkx_nodes(graph, node_position, node_size=node_sizes,
+                                       node_color='blue')
+
+        # edges are drawn as arrows with blue colormap, size 8 with width 1.5
+        edges = nx.draw_networkx_edges(graph, node_position, node_size=node_sizes, arrowstyle='->',
+                                       arrowsize=8, edge_color=edge_colors, edge_cmap=plt.cm.Blues, width=1.5)
+        # label position is 0.005 to the right of the node
+        label_pos = [node_position[i] + 0.005 for i in range(len(node_position))]
+        # draw labels with font size 10
+        labels_dict = {}
+        for i, label in enumerate(names):
+            labels_dict[i] = label
+        nx.draw_networkx_labels(graph, label_pos, labels_dict, font_size=10)
+        # generate colorbar from the edge colors
+        pc = mpl.collections.PatchCollection(edges, cmap=plt.cm.Blues)
+        # pc.set_clim([0, max_c])
+        pc.set_array(edge_colors)
+        plt.colorbar(pc)
+        ax = plt.gca()
+        ax.set_axis_off()
+        st.pyplot(fig, use_container_width=True)
 
 
 def condition_transmat_plot():
@@ -644,12 +714,15 @@ def condition_transmat_plot():
         transmat_predict(left_expander,
                          list(st.session_state['features'].keys())[count],
                          heatmap_color_scheme)
-        ridge_csv = transmat_csv(
+        directedgraph_predict(left_expander,
+                              list(st.session_state['features'].keys())[count],
+                              heatmap_color_scheme)
+        transition_csv = transmat_csv(
             list(st.session_state['features'].keys())[count],
         )
         left_expander.download_button(
             label="Download data as CSV",
-            data=ridge_csv,
+            data=transition_csv,
             file_name=f"transitions_{list(st.session_state['features'].keys())[count]}.csv",
             mime='text/csv',
             key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
@@ -663,12 +736,15 @@ def condition_transmat_plot():
                 transmat_predict(right_expander,
                                  list(st.session_state['features'].keys())[count],
                                  heatmap_color_scheme)
-                ridge_csv = transmat_csv(
+                directedgraph_predict(right_expander,
+                                      list(st.session_state['features'].keys())[count],
+                                      heatmap_color_scheme)
+                transition_csv = transmat_csv(
                     list(st.session_state['features'].keys())[count],
                 )
                 right_expander.download_button(
                     label="Download data as CSV",
-                    data=ridge_csv,
+                    data=transition_csv,
                     file_name=f"transitions_{list(st.session_state['features'].keys())[count]}.csv",
                     mime='text/csv',
                     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
@@ -680,12 +756,15 @@ def condition_transmat_plot():
             transmat_predict(right_expander,
                              list(st.session_state['features'].keys())[count],
                              heatmap_color_scheme)
-            ridge_csv = transmat_csv(
+            directedgraph_predict(right_expander,
+                                  list(st.session_state['features'].keys())[count],
+                                  heatmap_color_scheme)
+            transition_csv = transmat_csv(
                 list(st.session_state['features'].keys())[count],
             )
             right_expander.download_button(
                 label="Download data as CSV",
-                data=ridge_csv,
+                data=transition_csv,
                 file_name=f"transitions_{list(st.session_state['features'].keys())[count]}.csv",
                 mime='text/csv',
                 key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
@@ -720,7 +799,6 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                 bout_disp_all.append(bout_disp)
                 bout_duration_all.append(bout_duration)
                 bout_avg_speed_all.append(bout_avg_speed)
-                # st.write((bout_duration[0]), (bout_avg_speed[0]))
             bout_disp_bps.append(bout_disp_all)
             bout_duration_bps.append(bout_duration_all)
             bout_avg_speed_bps.append(bout_avg_speed_all)
@@ -897,7 +975,7 @@ def condition_kinematix_plot():
         kinematix_predict(left_expander,
                           list(st.session_state['features'].keys())[count],
                           behavior_colors)
-        # ridge_csv = duration_ridge_csv(
+        # ridge_csv = kinematics_csv(
         #     list(st.session_state['features'].keys())[count],
         # )
         # left_expander.download_button(
@@ -916,7 +994,7 @@ def condition_kinematix_plot():
                 kinematix_predict(right_expander,
                                   list(st.session_state['features'].keys())[count],
                                   behavior_colors)
-                # ridge_csv = duration_ridge_csv(
+                # ridge_csv = kinematics_csv(
                 #     list(st.session_state['features'].keys())[count],
                 # )
                 # right_expander.download_button(
@@ -933,7 +1011,7 @@ def condition_kinematix_plot():
             kinematix_predict(right_expander,
                               list(st.session_state['features'].keys())[count],
                               behavior_colors)
-            # ridge_csv = duration_ridge_csv(
+            # ridge_csv = kinematics_csv(
             #     list(st.session_state['features'].keys())[count],
             # )
             # right_expander.download_button(
