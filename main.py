@@ -127,7 +127,15 @@ elif authentication_status is None:
 # except Exception as e:
 #     st.error(e)
 
-
+bottom_cont = st.container()
+_, bottom_mid, _ = bottom_cont.columns([1, 4, 1])
+with bottom_mid:
+    st.markdown("""---""")
+    st.write('')
+    st.markdown(f'<span style="color:grey; font-family:Avenir;">'
+                f'LUPE X B-SOiD is developed by Alexander Hsu and '
+                f' Justin James </span>',
+                unsafe_allow_html=True)
 
 
 
