@@ -80,7 +80,7 @@ def bout_bar_csv(condition):
     return convert_df(concat_df)
 
 
-def get_duration_bouts(predict, behavior_classes):
+def get_duration_bouts(predict, behavior_classes, framerate=10):
     behav_durations = []
     bout_start_idx = np.where(np.diff(np.hstack([-1, predict])) != 0)[0]
     bout_durations = np.hstack([np.diff(bout_start_idx), len(predict) - np.max(bout_start_idx)])
@@ -88,7 +88,7 @@ def get_duration_bouts(predict, behavior_classes):
     for b in behavior_classes:
         idx_b = np.where(bout_start_label == int(b))[0]
         if len(idx_b) > 0:
-            behav_durations.append(bout_durations[idx_b])
+            behav_durations.append(bout_durations[idx_b]/framerate)
         else:
             behav_durations.append(0)
     return behav_durations

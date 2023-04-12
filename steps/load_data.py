@@ -111,7 +111,7 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_kinematix_plot()
+        # condition_ridge_plot()
         try:
             if 'pose' in st.session_state:
                 mid_expander = st.expander('Analysis method', expanded=True)

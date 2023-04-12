@@ -44,19 +44,17 @@ def ethogram_plot(condition, new_predictions, behavior_names, behavior_colors, l
                      key=f'cond{condition}_ckbx'):
         rand_start = np.random.choice(prefill_array.shape[0] - length_, 1, replace=False)
         ax.imshow(prefill_array[int(rand_start):int(rand_start + length_), :].T, cmap=cmap_)
-        # ax.set_yticks(np.arange(0, len(behaviors_with_names), 1))
-        # ax.set_yticklabels(np.arange(0, len(behaviors_with_names), 1))
         ax.set_xticks(np.arange(0, length_, int(length_ / 5)))
-        ax.set_xticklabels(np.arange(int(rand_start), int(rand_start + length_), int(length_ / 5)))
-        ax.set_xlabel('Frame #')
+        ax.set_xticklabels(np.arange(int(rand_start), int(rand_start + length_), int(length_ / 5))/10)
+        ax.set_xlabel('seconds')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
     else:
         rand_start = 0
         ax.imshow(prefill_array[rand_start:rand_start + length_, :].T, cmap=cmap_)
-        ax.set_xticks(np.arange(rand_start, length_, int(length_ / 1)))
-        ax.set_xticklabels(np.arange(0, length_, int(length_ / 1)))
-        ax.set_xlabel('Frame #')
+        ax.set_xticks(np.arange(rand_start, length_, int(length_ / 5)))
+        ax.set_xticklabels(np.arange(0, length_, int(length_ / 5))/10)
+        ax.set_xlabel('seconds')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
 
@@ -322,7 +320,6 @@ def bar_predict(placeholder, condition, behavior_colors):
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
-        bar_placeholder = st.empty()
         bout_counts = []
         for file_idx in range(len(predict)):
             bout_counts.append(get_num_bouts(predict[file_idx], behavior_classes))
@@ -337,7 +334,16 @@ def bar_predict(placeholder, condition, behavior_colors):
             marker_color=pd.Series(behavior_colors),
             marker_line=dict(width=1.2, color='black'))
         )
-        bar_placeholder.plotly_chart(fig, use_container_width=True)
+        y_max = np.max(bout_mean+bout_std)
+        max_counts = st.slider('behavioral instance counts y limit',
+                               min_value=0,
+                               max_value=int(y_max) * 2,
+                               value=int(y_max),
+                               key=f'max_counts_slider_{condition}')
+        fig.update_layout(yaxis=dict(title=f"counts (mean+-sd) across "
+                                           f"{len(st.session_state['features'][condition])} files"),
+                          yaxis_range=[0, max_counts])
+        st.plotly_chart(fig, use_container_width=True)
 
 
 def condition_bar_plot():
@@ -457,7 +463,7 @@ def ridge_predict(placeholder, condition, behavior_colors):
         ridge_placeholder = st.empty()
         duration_ = []
         for file_idx in range(len(predict)):
-            duration_.append(get_duration_bouts(predict[file_idx], behavior_classes))
+            duration_.append(get_duration_bouts(predict[file_idx], behavior_classes, framerate=10))
         colors = [mcolors.to_hex(i) for i in list(behavior_colors.values())]
         for file_chosen in range(len(duration_)):
             if file_chosen == 0:
@@ -479,7 +485,8 @@ def ridge_predict(placeholder, condition, behavior_colors):
         fig.update_traces(
             orientation='h', side='positive', width=3, points=False,
         )
-        fig.update_layout(xaxis_showgrid=False, xaxis_zeroline=False, xaxis_range=[0, max_dur])
+        fig.update_layout(xaxis_showgrid=False, xaxis_zeroline=False,
+                          xaxis_range=[0, max_dur], xaxis=dict(title='seconds'))
         ridge_placeholder.plotly_chart(fig, use_container_width=True)
 
 
@@ -761,7 +768,7 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                                    max_value=int(y_max) * 2,
                                    value=int(y_max),
                                    key=f'max_dist_slider_{condition}')
-            fig.update_layout(yaxis_range=[0, max_dist_y])
+            fig.update_layout(yaxis=dict(title='bout distance traveled (Δpixels)'), yaxis_range=[0, max_dist_y])
             st.plotly_chart(fig, use_container_width=True)
         with dur_tab:
             for b, behav in enumerate(behavioral_dur.keys()):
@@ -798,7 +805,7 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                                   max_value=int(y_max) * 2,
                                   value=int(y_max),
                                   key=f'max_dur_slider_{condition}')
-            fig.update_layout(yaxis_range=[0, max_dur_y])
+            fig.update_layout(yaxis=dict(title='bout duration (seconds)'), yaxis_range=[0, max_dur_y])
             st.plotly_chart(fig, use_container_width=True)
         with speed_tab:
             for b, behav in enumerate(behavioral_speed.keys()):
@@ -835,7 +842,7 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                                     max_value=int(y_max) * 2,
                                     value=int(y_max),
                                     key=f'max_speed_slider_{condition}')
-            fig.update_layout(yaxis_range=[0, max_speed_y])
+            fig.update_layout(yaxis=dict(title='bout movement speed (Δpixels/second)'), yaxis_range=[0, max_speed_y])
             st.plotly_chart(fig, use_container_width=True)
 
 
