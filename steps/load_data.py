@@ -23,8 +23,9 @@ def load_view():
             st.warning('please upload pkl file')
     with asoid_t:
         try:
-            print(st.session_state['classifier'])
-            text_ = f":red[**RESET**] classifier in memory!"
+            # print(st.session_state['classifier'])
+            if 'classifier' in st.session_state:
+                text_ = f":red[**RESET**] classifier in memory!"
 
             def clear_classifier():
                 del st.session_state['classifier']
@@ -56,7 +57,7 @@ def load_view():
             try:
                 if 'classifier' not in st.session_state:
                     st.session_state['classifier'] = rescale_classifier(feats_targets_file, training_file)
-                    pickle.dump(st.session_state['classifier'], open('./models/demo.pkl', 'wb'))
+                    # pickle.dump(st.session_state['classifier'], open('./models/demo.pkl', 'wb'))
             except:
                 st.warning('please upload sav file')
             if 'classifier' in st.session_state:
@@ -101,10 +102,10 @@ def load_view():
                         st.session_state['features'] = features
                     st.markdown(f":blue[saved features] from conditions: "
                                 f":orange[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]")
-                    pickle.dump(st.session_state['bodypart_names'], open('./data/demo_bodypart_names.pkl', 'wb'))
-                    pickle.dump(st.session_state['bodypart_idx'], open('./data/demo_bodypart_idx.pkl', 'wb'))
-                    pickle.dump(st.session_state['pose'], open('./data/demo_pose.pkl', 'wb'))
-                    pickle.dump(st.session_state['features'], open('./data/demo_feats.pkl', 'wb'))
+                    # pickle.dump(st.session_state['bodypart_names'], open('./data/demo_bodypart_names.pkl', 'wb'))
+                    # pickle.dump(st.session_state['bodypart_idx'], open('./data/demo_bodypart_idx.pkl', 'wb'))
+                    # pickle.dump(st.session_state['pose'], open('./data/demo_pose.pkl', 'wb'))
+                    # pickle.dump(st.session_state['features'], open('./data/demo_feats.pkl', 'wb'))
             except:
                 pass
             if 'features' in st.session_state:
@@ -112,25 +113,24 @@ def load_view():
         st.write('---')
         # condition_kinematix_plot()
         try:
-            # st.write(st.session_state['pose'])
-            print(st.session_state['pose'])
-            mid_expander = st.expander('Analysis method', expanded=True)
-            analysis_chosen = mid_expander.radio('',
-                                       ['ethogram', 'duration pie', 'bout counts',
-                                        'bout duration', 'transition graphs', 'pose kinematics'],
-                                       horizontal=True)
-            if analysis_chosen == 'ethogram':
-                condition_etho_plot()
-            if analysis_chosen == 'duration pie':
-                condition_pie_plot()
-            if analysis_chosen == 'bout counts':
-                condition_bar_plot()
-            if analysis_chosen == 'bout duration':
-                condition_ridge_plot()
-            if analysis_chosen == 'transition graphs':
-                condition_transmat_plot()
-            if analysis_chosen == 'pose kinematics':
-                condition_kinematix_plot()
+            if 'pose' in st.session_state:
+                mid_expander = st.expander('Analysis method', expanded=True)
+                analysis_chosen = mid_expander.radio('',
+                                           ['ethogram', 'duration pie', 'bout counts',
+                                            'bout duration', 'transition graphs', 'pose kinematics'],
+                                           horizontal=True)
+                if analysis_chosen == 'ethogram':
+                    condition_etho_plot()
+                if analysis_chosen == 'duration pie':
+                    condition_pie_plot()
+                if analysis_chosen == 'bout counts':
+                    condition_bar_plot()
+                if analysis_chosen == 'bout duration':
+                    condition_ridge_plot()
+                if analysis_chosen == 'transition graphs':
+                    condition_transmat_plot()
+                if analysis_chosen == 'pose kinematics':
+                    condition_kinematix_plot()
                 # st.write('placeholder for pose kinematics')
         except:
             pass
