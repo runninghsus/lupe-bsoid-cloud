@@ -695,20 +695,28 @@ def kinematix_predict(placeholder, condition, behavior_colors):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
         dist_tab, dur_tab, speed_tab = st.tabs(['trajectory distance', 'duration', 'average speed'])
-        bp_select = st.radio('select body part',
-                             st.session_state['bodypart_names'],
-                             horizontal=True,
-                             key=f'bodypart_radio_{condition}')
-        bodypart = st.session_state['bodypart_names'].index(bp_select)
-        bout_disp_all = []
-        bout_duration_all = []
-        bout_avg_speed_all = []
-        for file_chosen in range(len(predict)):
-            behavior, behavioral_start_time, behavior_duration, bout_disp, bout_duration, bout_avg_speed = \
-                get_avg_kinematics(predict[file_chosen], pose[file_chosen], bodypart, framerate=10)
-            bout_disp_all.append(bout_disp)
-            bout_duration_all.append(bout_duration)
-            bout_avg_speed_all.append(bout_avg_speed)
+        bp_selects = st.multiselect('select body part',
+                                    st.session_state['bodypart_names'],
+                                    default=st.session_state['bodypart_names'][0],
+                                    key=f'bodypart_radio_{condition}')
+        bout_disp_bps = []
+        bout_duration_bps = []
+        bout_avg_speed_bps = []
+        for bp_select in bp_selects:
+            bodypart = st.session_state['bodypart_names'].index(bp_select)
+            bout_disp_all = []
+            bout_duration_all = []
+            bout_avg_speed_all = []
+            for file_chosen in range(len(predict)):
+                behavior, behavioral_start_time, behavior_duration, bout_disp, bout_duration, bout_avg_speed = \
+                    get_avg_kinematics(predict[file_chosen], pose[file_chosen], bodypart, framerate=10)
+                bout_disp_all.append(bout_disp)
+                bout_duration_all.append(bout_duration)
+                bout_avg_speed_all.append(bout_avg_speed)
+                # st.write((bout_duration[0]), (bout_avg_speed[0]))
+            bout_disp_bps.append(bout_disp_all)
+            bout_duration_bps.append(bout_duration_all)
+            bout_avg_speed_bps.append(bout_avg_speed_all)
         behavioral_sums = {key: [] for key in names}
         behavioral_dur = {key: [] for key in names}
         behavioral_speed = {key: [] for key in names}
@@ -716,75 +724,118 @@ def kinematix_predict(placeholder, condition, behavior_colors):
         # file, behav, instance
         with dist_tab:
             for b, behav in enumerate(behavioral_sums.keys()):
-                for f in range(len(bout_disp_all)):
+                for f in range(len(bout_disp_bps[0])):
                     if f == 0:
-                        behavioral_sums[behav] = [np.sum(bout_disp_all[f][b][inst])
-                                                  for inst in range(len(bout_disp_all[f][b]))]
+                        behavioral_sums[behav] = np.hstack(
+                            [np.hstack(
+                                [np.sum(bout_disp_bps[bp][f][b][inst])
+                                 for inst in range(len(bout_disp_bps[0][f][b]))])
+                                for bp in range(len(bout_disp_bps))])
+
                     else:
                         behavioral_sums[behav] = np.hstack((behavioral_sums[behav],
-                                                            [np.sum(bout_disp_all[f][b][inst])
-                                                             for inst in range(len(bout_disp_all[f][b]))]
-                                                            ))
+                                                            np.hstack(
+                                                                [np.hstack(
+                                                                    [np.sum(bout_disp_bps[bp][f][b][inst])
+                                                                     for inst in range(len(bout_disp_bps[0][f][b]))])
+                                                                    for bp in range(len(bout_disp_bps))])))
             fig = go.Figure()
+            y_max = 0
             for b, behav in enumerate(behavioral_sums.keys()):
                 fig.add_trace(go.Box(
                     y=behavioral_sums[behav]
-                    [(behavioral_sums[behav]<np.percentile(behavioral_sums[behav], 95)) &
-                     (behavioral_sums[behav]>np.percentile(behavioral_sums[behav], 5))],
+                    [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+                     (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))],
                     name=behav,
                     line_color=behavior_colors[b],
-                    # box_visible=True,
                     boxpoints=False,
-                    # meanline_visible=True
                 ))
+                if np.max(behavioral_sums[behav]
+                          [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+                           (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))]) > y_max:
+                    y_max = np.max(behavioral_sums[behav]
+                                   [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+                                    (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))])
+            max_dist_y = st.slider('max speed',
+                                   min_value=0,
+                                   max_value=int(y_max) * 2,
+                                   value=int(y_max),
+                                   key=f'max_dist_slider_{condition}')
+            fig.update_layout(yaxis_range=[0, max_dist_y])
             st.plotly_chart(fig, use_container_width=True)
         with dur_tab:
             for b, behav in enumerate(behavioral_dur.keys()):
-                for f in range(len(bout_disp_all)):
+                for f in range(len(bout_duration_bps[0])):
                     if f == 0:
-                        behavioral_dur[behav] = [np.sum(bout_duration_all[f][b][inst])
-                                                 for inst in range(len(bout_duration_all[f][b]))]
+                        behavioral_dur[behav] = np.hstack(
+                            [bout_duration_bps[bp][f][b]
+                             for bp in range(len(bout_duration_bps))])
+
                     else:
                         behavioral_dur[behav] = np.hstack((behavioral_dur[behav],
-                                                           [np.sum(bout_duration_all[f][b][inst])
-                                                            for inst in range(len(bout_duration_all[f][b]))]
-                                                           ))
+                                                           np.hstack(
+                                                               [bout_duration_bps[bp][f][b]
+                                                                for bp in range(len(bout_duration_bps))])))
             fig = go.Figure()
+            y_max = 0
             for b, behav in enumerate(behavioral_dur.keys()):
                 fig.add_trace(go.Box(
                     y=behavioral_dur[behav]
-                    [(behavioral_dur[behav]<np.percentile(behavioral_dur[behav], 95)) &
-                     (behavioral_dur[behav]>np.percentile(behavioral_dur[behav], 5))],
+                    [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
+                     (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))],
                     name=behav,
                     line_color=behavior_colors[b],
-                    # box_visible=True,
                     boxpoints=False,
-                    # meanline_visible=True
                 ))
+                if np.max(behavioral_dur[behav]
+                          [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
+                           (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))]) > y_max:
+                    y_max = np.max(behavioral_dur[behav]
+                                   [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
+                                    (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))])
+            max_dur_y = st.slider('max speed',
+                                  min_value=0,
+                                  max_value=int(y_max) * 2,
+                                  value=int(y_max),
+                                  key=f'max_dur_slider_{condition}')
+            fig.update_layout(yaxis_range=[0, max_dur_y])
             st.plotly_chart(fig, use_container_width=True)
         with speed_tab:
             for b, behav in enumerate(behavioral_speed.keys()):
-                for f in range(len(bout_avg_speed_all)):
+                for f in range(len(bout_avg_speed_bps[0])):
                     if f == 0:
-                        behavioral_speed[behav] = [np.sum(bout_avg_speed_all[f][b][inst])
-                                                   for inst in range(len(bout_avg_speed_all[f][b]))]
+                        behavioral_speed[behav] = np.hstack(
+                            [bout_avg_speed_bps[bp][f][b]
+                             for bp in range(len(bout_avg_speed_bps))])
+
                     else:
-                        behavioral_speed[behav] = np.hstack((behavioral_sums[behav],
-                                                             [np.sum(bout_avg_speed_all[f][b][inst])
-                                                              for inst in range(len(bout_avg_speed_all[f][b]))]
-                                                             ))
+                        behavioral_speed[behav] = np.hstack((behavioral_speed[behav],
+                                                             np.hstack(
+                                                                 [bout_avg_speed_bps[bp][f][b]
+                                                                  for bp in range(len(bout_avg_speed_bps))])))
             fig = go.Figure()
+            y_max = 0
             for b, behav in enumerate(behavioral_speed.keys()):
                 fig.add_trace(go.Box(
                     y=behavioral_speed[behav]
-                    [(behavioral_speed[behav]<np.percentile(behavioral_speed[behav], 95)) &
-                     (behavioral_speed[behav]>np.percentile(behavioral_speed[behav], 5))],
+                    [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
+                     (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))],
                     name=behav,
                     line_color=behavior_colors[b],
-                    # box_visible=True,
                     boxpoints=False,
-                    # meanline_visible=True
                 ))
+                if np.max(behavioral_speed[behav]
+                          [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
+                           (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))]) > y_max:
+                    y_max = np.max(behavioral_speed[behav]
+                                   [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
+                                    (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))])
+            max_speed_y = st.slider('max speed',
+                                    min_value=0,
+                                    max_value=int(y_max) * 2,
+                                    value=int(y_max),
+                                    key=f'max_speed_slider_{condition}')
+            fig.update_layout(yaxis_range=[0, max_speed_y])
             st.plotly_chart(fig, use_container_width=True)
 
 
