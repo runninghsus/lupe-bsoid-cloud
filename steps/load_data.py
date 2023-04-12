@@ -39,10 +39,10 @@ def load_view():
                     st.session_state['features'] = pickle.load(fr)
                 with open('./data/demo_pose.pkl', 'rb') as fr:
                     st.session_state['pose'] = pickle.load(fr)
-                with open('./data/demo_bodypart_name.pkl', 'rb') as fr:
-                    st.session_state['bodypart_name'] = pickle.load(fr)
+                with open('./data/demo_bodypart_names.pkl', 'rb') as fr:
+                    st.session_state['bodypart_names'] = pickle.load(fr)
                 with open('./data/demo_bodypart_idx.pkl', 'rb') as fr:
-                    st.session_state['bodypart'] = pickle.load(fr)
+                    st.session_state['bodypart_idx'] = pickle.load(fr)
             file1, file2 = st.columns(2)
             feats_targets_file = file1.file_uploader('Upload your feats_targets.sav',
                                                      accept_multiple_files=False,
@@ -56,7 +56,7 @@ def load_view():
             try:
                 if 'classifier' not in st.session_state:
                     st.session_state['classifier'] = rescale_classifier(feats_targets_file, training_file)
-                    # pickle.dump(st.session_state['classifier'], open('./models/demo.pkl', 'wb'))
+                    pickle.dump(st.session_state['classifier'], open('./models/demo.pkl', 'wb'))
             except:
                 st.warning('please upload sav file')
             if 'classifier' in st.session_state:
@@ -85,7 +85,7 @@ def load_view():
                         p, pose_chosen = get_bodyparts(placeholder, data_raw[i])
                         if 'bodypart_names' not in st.session_state or 'bodypart' not in st.session_state:
                             st.session_state['bodypart_names'] = p
-                            st.session_state['bodypart'] = pose_chosen
+                            st.session_state['bodypart_idx'] = pose_chosen
                 conditions_list = list(uploaded_files.keys())
                 if st.button(f"extract features from conditions: "
                              f"{' & '.join([i.rpartition('_')[2] for i in conditions_list])}"):
@@ -101,17 +101,19 @@ def load_view():
                         st.session_state['features'] = features
                     st.markdown(f":blue[saved features] from conditions: "
                                 f":orange[{' & '.join([i.rpartition('_')[2] for i in conditions_list])}!]")
-                    # pickle.dump(st.session_state['bodypart_names'], open('./data/demo_bodypart_name.pkl', 'wb'))
-                    # pickle.dump(st.session_state['bodypart'], open('./data/demo_bodypart_idx.pkl', 'wb'))
-                    # pickle.dump(st.session_state['pose'], open('./data/demo_pose.pkl', 'wb'))
-                    # pickle.dump(st.session_state['features'], open('./data/demo_feats.pkl', 'wb'))
+                    pickle.dump(st.session_state['bodypart_names'], open('./data/demo_bodypart_names.pkl', 'wb'))
+                    pickle.dump(st.session_state['bodypart_idx'], open('./data/demo_bodypart_idx.pkl', 'wb'))
+                    pickle.dump(st.session_state['pose'], open('./data/demo_pose.pkl', 'wb'))
+                    pickle.dump(st.session_state['features'], open('./data/demo_feats.pkl', 'wb'))
             except:
                 pass
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_kinematix_plot()
+        condition_kinematix_plot()
         try:
+            # st.write(st.session_state['pose'])
+            print(st.session_state['pose'])
             mid_expander = st.expander('Analysis method', expanded=True)
             analysis_chosen = mid_expander.radio('',
                                        ['ethogram', 'duration pie', 'bout counts',

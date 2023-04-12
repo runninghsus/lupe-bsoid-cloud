@@ -689,43 +689,29 @@ def condition_transmat_plot():
 def kinematix_predict(placeholder, condition, behavior_colors):
     behavior_classes = st.session_state['classifier'].classes_
     names = [f'behavior {int(key)}' for key in behavior_classes]
-    # st.write(names[0])
     pose = st.session_state['pose'][condition]
-    file_chosen = 0
     predict = []
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
         dist_tab, dur_tab, speed_tab = st.tabs(['trajectory distance', 'duration', 'average speed'])
-        colL, colR = st.columns(2)
-        # kinematix_placeholder = st.empty()
-        # if len(predict) == 1:
-        #     colL.markdown(':orange[1] file only')
-        #     f_select = 0
-        # else:
-        #     f_select = colL.slider('select file to examine summary kinematics',
-        #                            min_value=1, max_value=len(predict), value=1,
-        #                            key=f'ethogram_slider_{condition}')
-        # file_chosen = f_select - 1
-        bp_select = colL.radio('select body part',
-                               st.session_state['bodypart_names'],
-                               key=f'bodypart_radio_{condition}')
+        bp_select = st.radio('select body part',
+                             st.session_state['bodypart_names'],
+                             horizontal=True,
+                             key=f'bodypart_radio_{condition}')
         bodypart = st.session_state['bodypart_names'].index(bp_select)
         bout_disp_all = []
         bout_duration_all = []
         bout_avg_speed_all = []
         for file_chosen in range(len(predict)):
             behavior, behavioral_start_time, behavior_duration, bout_disp, bout_duration, bout_avg_speed = \
-                get_avg_kinematics(predict[file_chosen], pose[file_chosen], names, bodypart, framerate=10)
+                get_avg_kinematics(predict[file_chosen], pose[file_chosen], bodypart, framerate=10)
             bout_disp_all.append(bout_disp)
             bout_duration_all.append(bout_duration)
             bout_avg_speed_all.append(bout_avg_speed)
-
-
         behavioral_sums = {key: [] for key in names}
         behavioral_dur = {key: [] for key in names}
         behavioral_speed = {key: [] for key in names}
-
         # sum over bouts
         # file, behav, instance
         with dist_tab:
@@ -741,52 +727,64 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                                                             ))
             fig = go.Figure()
             for b, behav in enumerate(behavioral_sums.keys()):
-                fig.add_trace(go.Violin(
-                    y=behavioral_sums[behav],
+                fig.add_trace(go.Box(
+                    y=behavioral_sums[behav]
+                    [(behavioral_sums[behav]<np.percentile(behavioral_sums[behav], 95)) &
+                     (behavioral_sums[behav]>np.percentile(behavioral_sums[behav], 5))],
                     name=behav,
                     line_color=behavior_colors[b],
-                    box_visible=True,
-                    meanline_visible=True))
+                    # box_visible=True,
+                    boxpoints=False,
+                    # meanline_visible=True
+                ))
             st.plotly_chart(fig, use_container_width=True)
         with dur_tab:
             for b, behav in enumerate(behavioral_dur.keys()):
                 for f in range(len(bout_disp_all)):
                     if f == 0:
                         behavioral_dur[behav] = [np.sum(bout_duration_all[f][b][inst])
-                                                  for inst in range(len(bout_duration_all[f][b]))]
+                                                 for inst in range(len(bout_duration_all[f][b]))]
                     else:
-                        behavioral_dur[behav] = np.hstack((behavioral_sums[behav],
-                                                            [np.sum(bout_duration_all[f][b][inst])
-                                                             for inst in range(len(bout_duration_all[f][b]))]
-                                                            ))
+                        behavioral_dur[behav] = np.hstack((behavioral_dur[behav],
+                                                           [np.sum(bout_duration_all[f][b][inst])
+                                                            for inst in range(len(bout_duration_all[f][b]))]
+                                                           ))
             fig = go.Figure()
             for b, behav in enumerate(behavioral_dur.keys()):
-                fig.add_trace(go.Violin(
-                    y=behavioral_dur[behav],
+                fig.add_trace(go.Box(
+                    y=behavioral_dur[behav]
+                    [(behavioral_dur[behav]<np.percentile(behavioral_dur[behav], 95)) &
+                     (behavioral_dur[behav]>np.percentile(behavioral_dur[behav], 5))],
                     name=behav,
                     line_color=behavior_colors[b],
-                    box_visible=True,
-                    meanline_visible=True))
+                    # box_visible=True,
+                    boxpoints=False,
+                    # meanline_visible=True
+                ))
             st.plotly_chart(fig, use_container_width=True)
         with speed_tab:
             for b, behav in enumerate(behavioral_speed.keys()):
                 for f in range(len(bout_avg_speed_all)):
                     if f == 0:
                         behavioral_speed[behav] = [np.sum(bout_avg_speed_all[f][b][inst])
-                                                  for inst in range(len(bout_avg_speed_all[f][b]))]
+                                                   for inst in range(len(bout_avg_speed_all[f][b]))]
                     else:
                         behavioral_speed[behav] = np.hstack((behavioral_sums[behav],
-                                                            [np.sum(bout_avg_speed_all[f][b][inst])
-                                                             for inst in range(len(bout_avg_speed_all[f][b]))]
-                                                            ))
+                                                             [np.sum(bout_avg_speed_all[f][b][inst])
+                                                              for inst in range(len(bout_avg_speed_all[f][b]))]
+                                                             ))
             fig = go.Figure()
             for b, behav in enumerate(behavioral_speed.keys()):
-                fig.add_trace(go.Violin(
-                    y=behavioral_speed[behav],
+                fig.add_trace(go.Box(
+                    y=behavioral_speed[behav]
+                    [(behavioral_speed[behav]<np.percentile(behavioral_speed[behav], 95)) &
+                     (behavioral_speed[behav]>np.percentile(behavioral_speed[behav], 5))],
                     name=behav,
                     line_color=behavior_colors[b],
-                    box_visible=True,
-                    meanline_visible=True))
+                    # box_visible=True,
+                    boxpoints=False,
+                    # meanline_visible=True
+                ))
             st.plotly_chart(fig, use_container_width=True)
 
 
@@ -841,16 +839,16 @@ def condition_kinematix_plot():
         kinematix_predict(left_expander,
                           list(st.session_state['features'].keys())[count],
                           behavior_colors)
-        ridge_csv = duration_ridge_csv(
-            list(st.session_state['features'].keys())[count],
-        )
-        left_expander.download_button(
-            label="Download data as CSV",
-            data=ridge_csv,
-            file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
-            mime='text/csv',
-            key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
-        )
+        # ridge_csv = duration_ridge_csv(
+        #     list(st.session_state['features'].keys())[count],
+        # )
+        # left_expander.download_button(
+        #     label="Download data as CSV",
+        #     data=ridge_csv,
+        #     file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+        #     mime='text/csv',
+        #     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+        # )
         count += 1
         # right only when multiples of 2 or
         if row == rows - 1:
@@ -860,16 +858,16 @@ def condition_kinematix_plot():
                 kinematix_predict(right_expander,
                                   list(st.session_state['features'].keys())[count],
                                   behavior_colors)
-                ridge_csv = duration_ridge_csv(
-                    list(st.session_state['features'].keys())[count],
-                )
-                right_expander.download_button(
-                    label="Download data as CSV",
-                    data=ridge_csv,
-                    file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
-                    mime='text/csv',
-                    key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
-                )
+                # ridge_csv = duration_ridge_csv(
+                #     list(st.session_state['features'].keys())[count],
+                # )
+                # right_expander.download_button(
+                #     label="Download data as CSV",
+                #     data=ridge_csv,
+                #     file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+                #     mime='text/csv',
+                #     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+                # )
                 count += 1
         else:
             right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
@@ -877,14 +875,14 @@ def condition_kinematix_plot():
             kinematix_predict(right_expander,
                               list(st.session_state['features'].keys())[count],
                               behavior_colors)
-            ridge_csv = duration_ridge_csv(
-                list(st.session_state['features'].keys())[count],
-            )
-            right_expander.download_button(
-                label="Download data as CSV",
-                data=ridge_csv,
-                file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
-                mime='text/csv',
-                key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
-            )
+            # ridge_csv = duration_ridge_csv(
+            #     list(st.session_state['features'].keys())[count],
+            # )
+            # right_expander.download_button(
+            #     label="Download data as CSV",
+            #     data=ridge_csv,
+            #     file_name=f"{list(st.session_state['features'].keys())[count]}.csv",
+            #     mime='text/csv',
+            #     key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+            # )
             count += 1

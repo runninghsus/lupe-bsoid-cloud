@@ -188,8 +188,7 @@ def boxcar_center(a, n):
     return moving_avg
 
 
-def get_avg_kinematics(predict, pose, behavior_names, bodypart, framerate=10):
-    # st.write(int(framerate/10), pose.shape)
+def get_avg_kinematics(predict, pose, bodypart, framerate=10):
     pose_estimate = pose[0:-1:3, bodypart * 2:bodypart * 2 + 2]
     group_start = [0]
     group_start = np.hstack((group_start, np.where(np.diff(predict) != 0)[0] + 1))
@@ -198,16 +197,13 @@ def get_avg_kinematics(predict, pose, behavior_names, bodypart, framerate=10):
     bout_i_index = [np.arange(group_start[i], group_end[i] + 1) for i in range(len(group_start))]
     # limiting to just the behavior bodypart x,y (10Hz) from start to end
     bout_pose_bodypart_i = [pose_estimate[bout_i_index[i], :] for i in range(len(bout_i_index))]
-
     behavior = predict[group_start]
     behavior_duration = np.hstack((np.diff(group_start), len(predict) - group_start[-1] + 1)) / framerate
     behavioral_start_time = group_start / framerate
-
     # kinematics portion
     bout_disp_all = []
     bout_duration_all = []
     bout_avg_speed_all = []
-    # window = np.int(np.round(0.05 / (1 / framerate)) * 2 - 1)
     for b in np.unique(predict):
         behavior_j_bodypart_i_pose = []
         behavior_j_bout_duration = []
@@ -216,14 +212,11 @@ def get_avg_kinematics(predict, pose, behavior_names, bodypart, framerate=10):
             if behavior_duration[behavior_index][instance] > .1:
                 behavior_j_bodypart_i_pose.append(bout_pose_bodypart_i[behavior_index[instance]])
                 behavior_j_bout_duration.append(behavior_duration[behavior_index][instance])
-        # st.write('{} has {} bouts excede 100ms in duration'.format(behavior_names[int(b)],
-        #                                                            len(behavior_j_bodypart_i_pose)))
         bout_avg_speed = []
         bout_duration = []
         bout_disp = []
         for n in range(len(behavior_j_bodypart_i_pose)):
             data_n_len = len(behavior_j_bodypart_i_pose[n])
-            # st.write(behavior_j_bodypart_i_pose[n].shape[1])
             disp_list = []
             # going through the duration of each bout that's over 0.1s
             for r in range(data_n_len):
@@ -236,13 +229,6 @@ def get_avg_kinematics(predict, pose, behavior_names, bodypart, framerate=10):
                                            behavior_j_bodypart_i_pose[n][r, c:c + 2]))
                     disp_list.append(disp)
             disp_r = np.array(disp_list)
-            # disp_boxcar = []
-            # st.write(disp_r.shape)
-            # try:
-            #     for l in range(disp_r.shape[1]):
-            #         disp_boxcar.append(disp_r[:, l])
-            # except IndexError:
-            #     pass
             disp_feat = np.array(disp_r)
             bout_disp.append(disp_feat)
             bout_duration.append(behavior_j_bout_duration[n])
