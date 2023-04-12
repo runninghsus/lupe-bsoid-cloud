@@ -110,7 +110,7 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        condition_kinematix_plot()
+        # condition_kinematix_plot()
         try:
             # st.write(st.session_state['pose'])
             print(st.session_state['pose'])
