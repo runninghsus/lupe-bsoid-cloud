@@ -1,3 +1,4 @@
+import stqdm
 import streamlit
 import time
 from utils.import_utils import *
@@ -66,10 +67,13 @@ def load_view():
             conditions_list = list(st.session_state['features'].keys())
             text_ = f":red[**RESET**] data from conditions: {' & '.join([i.rpartition('_')[2] for i in conditions_list])}!"
 
-            def clear_features():
+            def clear_data():
                 del st.session_state['features']
+                del st.session_state['pose']
+                del st.session_state['bodypart_names']
+                del st.session_state['bodypart_idx']
 
-            st.button(text_, on_click=clear_features)
+            st.button(text_, on_click=clear_data)
 
         except:
             num_cond = st.number_input('How many conditions?', min_value=2, max_value=10, value=2)
@@ -111,7 +115,7 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_transmat_plot()
+        # condition_kinematix_plot()
         try:
             if 'pose' in st.session_state:
                 mid_expander = st.expander('Analysis method', expanded=True)

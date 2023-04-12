@@ -835,12 +835,15 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                     line_color=behavior_colors[b],
                     boxpoints=False,
                 ))
-                if np.max(behavioral_sums[behav]
-                          [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
-                           (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))]) > y_max:
-                    y_max = np.max(behavioral_sums[behav]
-                                   [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
-                                    (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))])
+                try:
+                    if np.max(behavioral_sums[behav]
+                              [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+                               (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))]) > y_max:
+                        y_max = np.max(behavioral_sums[behav]
+                                       [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+                                        (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))])
+                except:
+                    pass
             max_dist_y = st.slider('pose trajectory distance y limit',
                                    min_value=0,
                                    max_value=int(y_max) * 2,
@@ -872,12 +875,15 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                     line_color=behavior_colors[b],
                     boxpoints=False,
                 ))
-                if np.max(behavioral_dur[behav]
-                          [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
-                           (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))]) > y_max:
-                    y_max = np.max(behavioral_dur[behav]
-                                   [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
-                                    (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))])
+                try:
+                    if np.max(behavioral_dur[behav]
+                              [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
+                               (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))]) > y_max:
+                        y_max = np.max(behavioral_dur[behav]
+                                       [(behavioral_dur[behav] < np.percentile(behavioral_dur[behav], 95)) &
+                                        (behavioral_dur[behav] > np.percentile(behavioral_dur[behav], 5))])
+                except:
+                    pass
             max_dur_y = st.slider('bout duration y limit',
                                   min_value=0,
                                   max_value=int(y_max) * 2,
@@ -909,12 +915,15 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                     line_color=behavior_colors[b],
                     boxpoints=False,
                 ))
-                if np.max(behavioral_speed[behav]
-                          [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
-                           (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))]) > y_max:
-                    y_max = np.max(behavioral_speed[behav]
-                                   [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
-                                    (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))])
+                try:
+                    if np.max(behavioral_speed[behav]
+                              [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
+                               (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))]) > y_max:
+                        y_max = np.max(behavioral_speed[behav]
+                                       [(behavioral_speed[behav] < np.percentile(behavioral_speed[behav], 95)) &
+                                        (behavioral_speed[behav] > np.percentile(behavioral_speed[behav], 5))])
+                except:
+                    pass
             max_speed_y = st.slider('average speed y limit',
                                     min_value=0,
                                     max_value=int(y_max) * 2,

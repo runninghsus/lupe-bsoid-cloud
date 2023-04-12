@@ -118,8 +118,6 @@ elif authentication_status:
             annotate.load_view()
         elif selected == None:
             menu.load_view()
-
-
     navigation()
 
 elif authentication_status is False:
