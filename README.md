@@ -1,6 +1,7 @@
 <p align="center">
 <img src="./images/png/color_transparent_banner.png" width="400">
 </p>
+
 ### Project funding
 Collaboration between Corder Lab at University of Pennsylvania and 
 Yttri Lab from Carnegie Mellon. 
