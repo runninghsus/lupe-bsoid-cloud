@@ -121,25 +121,27 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_kinematix_plot()
+        # condition_bar_plot()
         try:
             if 'pose' in st.session_state:
                 mid_expander = st.expander('Analysis method', expanded=True)
                 analysis_chosen = mid_expander.radio('',
-                                           ['ethogram', 'duration pie', 'bout counts',
-                                            'bout duration', 'transition graphs', 'pose kinematics'],
+                                           ['ethogram', 'behavioral location', 'behavioral ratio', 'frequency',
+                                            'duration', 'transition', 'kinematics'],
                                            horizontal=True)
                 if analysis_chosen == 'ethogram':
                     condition_etho_plot()
-                if analysis_chosen == 'duration pie':
+                if analysis_chosen == 'behavioral ratio':
                     condition_pie_plot()
-                if analysis_chosen == 'bout counts':
+                if analysis_chosen == 'behavioral location':
+                    st.write('placeholder for behavioral location')
+                if analysis_chosen == 'frequency':
                     condition_bar_plot()
-                if analysis_chosen == 'bout duration':
+                if analysis_chosen == 'duration':
                     condition_ridge_plot()
-                if analysis_chosen == 'transition graphs':
+                if analysis_chosen == 'transition':
                     condition_transmat_plot()
-                if analysis_chosen == 'pose kinematics':
+                if analysis_chosen == 'kinematics':
                     condition_kinematix_plot()
                 # st.write('placeholder for pose kinematics')
         except:

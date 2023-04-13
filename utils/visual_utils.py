@@ -331,6 +331,7 @@ def bar_predict(placeholder, condition, behavior_colors):
         fig = go.Figure()
         fig.add_trace(go.Bar(
             x=names, y=bout_mean,
+            # name=names,
             error_y=dict(type='data', array=bout_std),
             width=0.5,
             marker_color=pd.Series(behavior_colors),
@@ -462,7 +463,6 @@ def ridge_predict(placeholder, condition, behavior_colors):
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
-        ridge_placeholder = st.empty()
         duration_ = []
         for file_idx in range(len(predict)):
             duration_.append(get_duration_bouts(predict[file_idx], behavior_classes, framerate=10))
@@ -475,21 +475,40 @@ def ridge_predict(placeholder, condition, behavior_colors):
         max_dur = st.slider('max duration',
                             min_value=0,
                             max_value=int(
-                                np.percentile(np.array(duration_matrix)[~np.isnan(np.array(duration_matrix))],
-                                              99)),
-                            value=int(np.percentile(np.array(duration_matrix)[~np.isnan(np.array(duration_matrix))],
-                                                    95)),
+                                np.nanpercentile(np.array(duration_matrix),
+                                                 100)),
+                            value=int(np.nanpercentile(np.array(duration_matrix),
+                                                       95)),
                             key=f'maxdur_slider_{condition}')
         fig = go.Figure()
         names = [f'behavior {int(key)}' for key in behavior_classes]
         for data_line, color, name in zip(duration_matrix, colors, names):
-            fig.add_trace(go.Violin(x=data_line, line_color=color, name=name))
+            fig.add_trace(go.Violin(x=data_line[(data_line < np.nanpercentile(data_line, 95)) &
+                                                (data_line > np.nanpercentile(data_line, 5))],
+                                    line_color=color,
+                                    name=name))
         fig.update_traces(
             orientation='h', side='positive', width=3, points=False,
         )
         fig.update_layout(xaxis_showgrid=False, xaxis_zeroline=False,
                           xaxis_range=[0, max_dur], xaxis=dict(title='seconds'))
-        ridge_placeholder.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
+
+        fig = go.Figure()
+        for data_line, color, name in zip(duration_matrix, colors, names):
+            fig.add_trace(go.Box(y=data_line[(data_line < np.nanpercentile(data_line, 95)) &
+                                             (data_line > np.nanpercentile(data_line, 5))],
+                                 jitter=0.5,
+                                 whiskerwidth=0.3,
+                                 fillcolor=color,
+                                 marker_size=2,
+                                 line_width=1.2,
+                                 line_color='#000000',
+                                 name=name))
+        fig.update_layout(yaxis=dict(title='bout duration (seconds)'),
+                          yaxis_range=[0, max_dur],
+                          )
+        st.plotly_chart(fig, use_container_width=True)
 
 
 def condition_ridge_plot():
@@ -780,7 +799,7 @@ def kinematix_predict(placeholder, condition, behavior_colors):
     for f in range(len(st.session_state['features'][condition])):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
-        dist_tab, dur_tab, speed_tab = st.tabs(['trajectory distance', 'duration', 'average speed'])
+        dist_tab, dur_tab, speed_tab = st.tabs(['stride examples', 'stride length/speed', 'limb stance'])
         def_bp_selects = 'tail-base'
         if st.checkbox(f'use default body part: {def_bp_selects}',
                        key=f'default_bp_chkbx{condition}', value=True):
