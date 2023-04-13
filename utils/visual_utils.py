@@ -781,10 +781,16 @@ def kinematix_predict(placeholder, condition, behavior_colors):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
         dist_tab, dur_tab, speed_tab = st.tabs(['trajectory distance', 'duration', 'average speed'])
-        bp_selects = st.multiselect('select body part',
-                                    st.session_state['bodypart_names'],
-                                    default=st.session_state['bodypart_names'][0],
-                                    key=f'bodypart_radio_{condition}')
+        def_bp_selects = 'tail-base'
+        if st.checkbox(f'use default body part: {def_bp_selects}',
+                       key=f'default_bp_chkbx{condition}', value=True):
+            bp_selects = ['tail-base']
+        else:
+            bp_selects = st.multiselect('select body part',
+                                        st.session_state['bodypart_names'],
+                                        default=st.session_state['bodypart_names'][0],
+                                        key=f'bodypart_radio_{condition}')
+        # st.write(bp_selects, st.session_state['bodypart_names'].index(bp_selects[0]))
         bout_disp_bps = []
         bout_duration_bps = []
         bout_avg_speed_bps = []
@@ -851,6 +857,7 @@ def kinematix_predict(placeholder, condition, behavior_colors):
                                    key=f'max_dist_slider_{condition}')
             fig.update_layout(yaxis=dict(title='bout distance traveled (Δpixels)'), yaxis_range=[0, max_dist_y])
             st.plotly_chart(fig, use_container_width=True)
+
         with dur_tab:
             for b, behav in enumerate(behavioral_dur.keys()):
                 for f in range(len(bout_duration_bps[0])):

@@ -34,6 +34,12 @@ def load_view():
             st.button(text_, on_click=clear_classifier)
 
         except:
+            sex_selection = st.radio('select sex', ['male', 'female'])
+            if sex_selection == 'male':
+                st.markdown('loaded :blue[Male] model')
+            elif sex_selection == 'female':
+                st.markdown('loaded :orange[Female] model')
+
             if st.checkbox('use demo model and data'):
                 with open('./models/demo.pkl', 'rb') as fr:
                     st.session_state['classifier'] = pickle.load(fr)

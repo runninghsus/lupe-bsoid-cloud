@@ -8,7 +8,6 @@ def load_view():
     st.write("")
     desc_box = st.expander('Description', expanded=True)
     desc_box.write("LUPE B-SOiD is an automated analysis pipeline.")
-
     bottom_cont = st.container()
     with bottom_cont:
         st.markdown("""---""")
