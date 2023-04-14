@@ -8,6 +8,8 @@ from utils.feature_utils import *
 import plotly.express as px
 import networkx as nx
 import matplotlib as mpl
+import seaborn as sns
+from scipy.signal import savgol_filter
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -800,20 +802,22 @@ def kinematix_predict(placeholder, condition, behavior_colors):
         predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
     with placeholder:
         dist_tab, dur_tab, speed_tab = st.tabs(['stride examples', 'stride length/speed', 'limb stance'])
-        def_bp_selects = 'tail-base'
-        if st.checkbox(f'use default body part: {def_bp_selects}',
-                       key=f'default_bp_chkbx{condition}', value=True):
-            bp_selects = ['tail-base']
-        else:
-            bp_selects = st.multiselect('select body part',
-                                        st.session_state['bodypart_names'],
-                                        default=st.session_state['bodypart_names'][0],
-                                        key=f'bodypart_radio_{condition}')
-        # st.write(bp_selects, st.session_state['bodypart_names'].index(bp_selects[0]))
+        option_container = st.container()
+        plot_container = st.container()
+        def_bp_selects = ['right-forepaw', 'right-hindpaw']
+        # if st.checkbox(f"use default body part: {', '.join(def_bp_selects)}",
+        #                key=f'default_bp_chkbx{condition}', value=True):
+        #     bp_selects = def_bp_selects
+        # else:
+        # st.write(st.session_state['bodypart_names'].index("right-forepaw"))
+        bp_selects = st.selectbox('select body part',
+                                  st.session_state['bodypart_names'],
+                                  index=st.session_state['bodypart_names'].index("right-forepaw"),
+                                  key=f'bodypart_selectbox_{condition}')
         bout_disp_bps = []
         bout_duration_bps = []
         bout_avg_speed_bps = []
-        for bp_select in bp_selects:
+        for bp_select in [bp_selects]:
             bodypart = st.session_state['bodypart_names'].index(bp_select)
             bout_disp_all = []
             bout_duration_all = []
@@ -827,55 +831,102 @@ def kinematix_predict(placeholder, condition, behavior_colors):
             bout_disp_bps.append(bout_disp_all)
             bout_duration_bps.append(bout_duration_all)
             bout_avg_speed_bps.append(bout_avg_speed_all)
+
         behavioral_sums = {key: [] for key in names}
         behavioral_dur = {key: [] for key in names}
         behavioral_speed = {key: [] for key in names}
         # sum over bouts
-        # file, behav, instance
+        # bp, file, behav, instance
         with dist_tab:
-            for b, behav in enumerate(behavioral_sums.keys()):
-                for f in range(len(bout_disp_bps[0])):
-                    if f == 0:
-                        behavioral_sums[behav] = np.hstack(
-                            [np.hstack(
-                                [np.sum(bout_disp_bps[bp][f][b][inst])
-                                 for inst in range(len(bout_disp_bps[0][f][b]))])
-                                for bp in range(len(bout_disp_bps))])
+            # bp, file, behav, instance
+            slider_, checkbox_ = option_container.columns([3, 1])
+            y_val = []
+            checkbox_.write('')
+            checkbox_.write('')
+            if checkbox_.checkbox('smooth',
+                                  key=f'smth_checkbox_{condition}'):
+                for inst in range(len(bout_disp_bps[0][0][2])):
+                    try:
+                        y_val.append(savgol_filter(np.hstack(bout_disp_bps[0][0][2][inst]), 3, 1))
+                    except:
+                        y_val.append(np.hstack(bout_disp_bps[0][0][2][inst]))
+            else:
+                for inst in range(len(bout_disp_bps[0][0][2])):
+                    y_val.append(np.hstack(bout_disp_bps[0][0][2][inst]))
+            traject_dict = {'locomotor bout #': np.hstack([inst * np.ones(len(bout_disp_bps[0][0][2][inst]))
+                                              for inst in range(len(bout_disp_bps[0][0][2]))]),
+                            'x': np.hstack([np.arange(len(bout_disp_bps[0][0][2][inst]))
+                                            for inst in range(len(bout_disp_bps[0][0][2]))]),
+                            'y': np.hstack(y_val)}
 
-                    else:
-                        behavioral_sums[behav] = np.hstack((behavioral_sums[behav],
-                                                            np.hstack(
-                                                                [np.hstack(
-                                                                    [np.sum(bout_disp_bps[bp][f][b][inst])
-                                                                     for inst in range(len(bout_disp_bps[0][f][b]))])
-                                                                    for bp in range(len(bout_disp_bps))])))
-            fig = go.Figure()
-            y_max = 0
-            for b, behav in enumerate(behavioral_sums.keys()):
-                fig.add_trace(go.Box(
-                    y=behavioral_sums[behav]
-                    [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
-                     (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))],
-                    name=behav,
-                    line_color=behavior_colors[b],
-                    boxpoints=False,
-                ))
-                try:
-                    if np.max(behavioral_sums[behav]
-                              [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
-                               (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))]) > y_max:
-                        y_max = np.max(behavioral_sums[behav]
-                                       [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
-                                        (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))])
-                except:
-                    pass
-            max_dist_y = st.slider('pose trajectory distance y limit',
-                                   min_value=0,
-                                   max_value=int(y_max) * 2,
-                                   value=int(y_max),
-                                   key=f'max_dist_slider_{condition}')
-            fig.update_layout(yaxis=dict(title='bout distance traveled (Δpixels)'), yaxis_range=[0, max_dist_y])
-            st.plotly_chart(fig, use_container_width=True)
+            num_choose = slider_.slider('choose number of examples:',
+                                        min_value=1, max_value=len(np.unique(traject_dict['locomotor bout #'])),
+                                        value=int(len(np.unique(traject_dict['locomotor bout #'])) / 2),
+                                        key=f'numex_slider_{condition}')
+
+            sampled = np.random.choice(np.unique(traject_dict['locomotor bout #']), num_choose, replace=False)
+            traj_df = pd.DataFrame(data=traject_dict)
+            traj_df = traj_df[traj_df['locomotor bout #'].isin(sampled)]
+            sns.set_theme(rc={"axes.facecolor": (0, 0, 0, 0), 'figure.facecolor': '#ffffff', 'axes.grid': False})
+            g = sns.FacetGrid(traj_df, row='locomotor bout #', hue='locomotor bout #',
+                              palette=sns.color_palette("husl", num_choose),
+                              aspect=25, height=0.4)
+            # Draw the densities in a few steps
+            g.map(plt.plot, 'x', 'y', clip_on=False, alpha=1, linewidth=2).add_legend()
+            g.map(plt.fill_between, 'x', 'y', color='#ffffff', alpha=0.7)
+            # g.map(sns.lineplot, 'x', 'y', clip_on=False, alpha=1, color='#000000', linewidth=2)
+            # Set the subplots to overlap
+            g.fig.subplots_adjust(hspace=-0.9)
+            g.set_titles("")
+            g.set(yticks=[], xticks=[], ylabel="", xlabel="")
+            g.despine(bottom=True, left=True)
+            plot_container.pyplot(g, use_container_width=True)
+
+            # st.pyplot(g)
+
+            # for b, behav in enumerate(behavioral_sums.keys()):
+            #     for f in range(len(bout_disp_bps[0])):
+            #         if f == 0:
+            #             behavioral_sums[behav] = np.hstack(
+            #                 [np.hstack(
+            #                     [np.sum(bout_disp_bps[bp][f][b][inst])
+            #                      for inst in range(len(bout_disp_bps[0][f][b]))])
+            #                     for bp in range(len(bout_disp_bps))])
+            #
+            #         else:
+            #             behavioral_sums[behav] = np.hstack((behavioral_sums[behav],
+            #                                                 np.hstack(
+            #                                                     [np.hstack(
+            #                                                         [np.sum(bout_disp_bps[bp][f][b][inst])
+            #                                                          for inst in range(len(bout_disp_bps[0][f][b]))])
+            #                                                         for bp in range(len(bout_disp_bps))])))
+            # fig = go.Figure()
+            # y_max = 0
+            # for b, behav in enumerate(behavioral_sums.keys()):
+            #     fig.add_trace(go.Box(
+            #         y=behavioral_sums[behav]
+            #         [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+            #          (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))],
+            #         name=behav,
+            #         line_color=behavior_colors[b],
+            #         boxpoints=False,
+            #     ))
+            #     try:
+            #         if np.max(behavioral_sums[behav]
+            #                   [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+            #                    (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))]) > y_max:
+            #             y_max = np.max(behavioral_sums[behav]
+            #                            [(behavioral_sums[behav] < np.percentile(behavioral_sums[behav], 95)) &
+            #                             (behavioral_sums[behav] > np.percentile(behavioral_sums[behav], 5))])
+            #     except:
+            #         pass
+            # max_dist_y = st.slider('pose trajectory distance y limit',
+            #                        min_value=0,
+            #                        max_value=int(y_max) * 2,
+            #                        value=int(y_max),
+            #                        key=f'max_dist_slider_{condition}')
+            # fig.update_layout(yaxis=dict(title='bout distance traveled (Δpixels)'), yaxis_range=[0, max_dist_y])
+            # st.plotly_chart(fig, use_container_width=True)
 
         with dur_tab:
             for b, behav in enumerate(behavioral_dur.keys()):
