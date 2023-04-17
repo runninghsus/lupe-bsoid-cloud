@@ -121,7 +121,7 @@ def load_view():
             if 'features' in st.session_state:
                 st.experimental_rerun()
         st.write('---')
-        # condition_kinematix_plot()
+        # condition_location_plot()
         try:
             if 'pose' in st.session_state:
                 mid_expander = st.expander('Analysis method', expanded=True)
@@ -134,6 +134,7 @@ def load_view():
                 if analysis_chosen == 'behavioral ratio':
                     condition_pie_plot()
                 if analysis_chosen == 'behavioral location':
+                    condition_location_plot()
                     st.write('placeholder for behavioral location')
                 if analysis_chosen == 'frequency':
                     condition_bar_plot()

@@ -318,6 +318,160 @@ def condition_pie_plot():
             count += 1
 
 
+def location_predict(placeholder, condition, behavior_colors):
+    behavior_classes = st.session_state['classifier'].classes_
+    names = [f'behavior {int(key)}' for key in behavior_classes]
+    pose = st.session_state['pose'][condition]
+    bp_select = 'tail-base'
+    bodypart_idx = st.session_state['bodypart_names'].index(bp_select)*2
+    # bodypart_idx = st.session_state['bodypart_idx'][::2][bodypart_id]
+    predict = []
+    file_chosen = 0
+    for f in range(len(st.session_state['features'][condition])):
+        predict.append(st.session_state['classifier'].predict(st.session_state['features'][condition][f]))
+    fig, ax = plt.subplots(1, 1)
+    # st.write(behavior_classes)
+    for b in behavior_classes:
+        idx_b = np.where(predict[file_chosen]==b)[0]
+        ax.scatter(pose[file_chosen][idx_b, bodypart_idx],
+                   pose[file_chosen][idx_b, bodypart_idx+1],
+                   c = behavior_colors[b])
+    minx, miny = np.min(pose[file_chosen][:, bodypart_idx]), np.min(pose[file_chosen][:, bodypart_idx+1])
+    maxx, maxy = np.max(pose[file_chosen][:, bodypart_idx]), np.max(pose[file_chosen][:, bodypart_idx+1])
+    # st.write(np.sqrt((minx+maxx)/2, (miny+miny)/2))
+
+    # circle_outline = plt.Circle(((minx+maxx)/2, (miny+miny)/2), 350, color='k', fill=False)
+    # ax.add_patch(circle_outline)
+    plt.axis('off')
+    plt.axis('equal')
+    placeholder.pyplot(fig)
+
+    # predict_dict = {'condition': np.repeat(condition, len(np.hstack(predict))),
+    #                 'behavior': np.hstack(predict)}
+    # df_raw = pd.DataFrame(data=predict_dict)
+    # labels = df_raw['behavior'].value_counts(sort=False).index
+    # values = df_raw['behavior'].value_counts(sort=False).values
+    # names = [f'behavior {int(key)}' for key in behavior_classes]
+    # # summary dataframe
+    # df = pd.DataFrame()
+    # # do i need this?
+    # behavior_labels = []
+    # for l in labels:
+    #     behavior_labels.append(behavior_classes[int(l)])
+    # df["values"] = values
+    # df['labels'] = behavior_labels
+    # df["colors"] = df["labels"].apply(lambda x:
+    #                                   behavior_colors.get(x))  # to connect Column value to Color in Dict
+    # with placeholder:
+    #     fig = go.Figure(data=[go.Pie(labels=[names[int(i)] for i in df["labels"]], values=df["values"], hole=.4)])
+    #     fig.update_traces(hoverinfo='label+percent',
+    #                       textinfo='value',
+    #                       textfont_size=16,
+    #                       marker=dict(colors=df["colors"],
+    #                                   line=dict(color='#000000', width=1)))
+    #     st.plotly_chart(fig, use_container_width=True)
+
+
+def condition_location_plot():
+    behavior_classes = st.session_state['classifier'].classes_
+    figure_container = st.container()
+    option_expander = st.expander("Configure colors",
+                                  expanded=True)
+    behavior_colors = {key: [] for key in behavior_classes}
+    all_c_options = list(mcolors.CSS4_COLORS.keys())
+    np.random.seed(42)
+    selected_idx = np.random.choice(np.arange(len(all_c_options)),
+                                    len(behavior_classes),
+                                    replace=False)
+    default_colors = [all_c_options[s] for s in selected_idx]
+    col1, col2, col3, col4 = option_expander.columns(4)
+    for i, class_id in enumerate(behavior_classes):
+        if i % 4 == 0:
+            behavior_colors[class_id] = col1.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+
+        elif i % 4 == 1:
+            behavior_colors[class_id] = col2.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+        elif i % 4 == 2:
+            behavior_colors[class_id] = col3.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+        elif i % 4 == 3:
+            behavior_colors[class_id] = col4.selectbox(f'select color for {behavior_classes[i]}',
+                                                       all_c_options,
+                                                       index=all_c_options.index(default_colors[i]),
+                                                       key=f'color_option{i}'
+                                                       )
+    num_cond = len(st.session_state['features'])
+    rows = int(np.ceil(num_cond / 2))
+    mod_ = num_cond % 2
+    count = 0
+    for row in range(rows):
+        left_col, right_col = figure_container.columns(2)
+        # left stays
+        left_expander = left_col.expander(f'Condition {row * 2 + 1}:',
+                                          expanded=True)
+        location_predict(left_expander,
+                    list(st.session_state['features'].keys())[count],
+                    behavior_colors)
+        totaldur_csv = duration_pie_csv(
+            list(st.session_state['features'].keys())[count],
+        )
+        left_expander.download_button(
+            label="Download data as CSV",
+            data=totaldur_csv,
+            file_name=f"location_{list(st.session_state['features'].keys())[count]}.csv",
+            mime='text/csv',
+            key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+        )
+        count += 1
+        # right only when multiples of 2 or
+        if row == rows - 1:
+            if mod_ == 0:
+                right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                    expanded=True)
+                location_predict(right_expander,
+                            list(st.session_state['features'].keys())[count],
+                            behavior_colors)
+                totaldur_csv = duration_pie_csv(
+                    list(st.session_state['features'].keys())[count],
+                )
+                right_expander.download_button(
+                    label="Download data as CSV",
+                    data=totaldur_csv,
+                    file_name=f"location_{list(st.session_state['features'].keys())[count]}.csv",
+                    mime='text/csv',
+                    key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+                )
+                count += 1
+        else:
+            right_expander = right_col.expander(f'Condition {row * 2 + 2}:',
+                                                expanded=True)
+            location_predict(right_expander,
+                        list(st.session_state['features'].keys())[count],
+                        behavior_colors)
+            totaldur_csv = duration_pie_csv(
+                list(st.session_state['features'].keys())[count],
+            )
+            right_expander.download_button(
+                label="Download data as CSV",
+                data=totaldur_csv,
+                file_name=f"location_{list(st.session_state['features'].keys())[count]}.csv",
+                mime='text/csv',
+                key=f"{list(st.session_state['features'].keys())[count]}_dwnload"
+            )
+            count += 1
+
+
 def bar_predict(placeholder, condition, behavior_colors):
     behavior_classes = st.session_state['classifier'].classes_
     predict = []
