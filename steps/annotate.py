@@ -4,7 +4,7 @@ import io
 from utils.import_utils import read_csvfiles, behavior_movies
 
 def load_view():
-    st.markdown(f" <h1 style='text-align: left; color: #000000; font-size:30px; "
+    st.markdown(f" <h1 style='text-align: left; color: #FF6A95; font-size:30px; "
                 f"font-family:Avenir; font-weight:normal;'>Annotate behaviors</h1> "
                 , unsafe_allow_html=True)
     st.write('')
@@ -43,5 +43,5 @@ def load_view():
         st.markdown("""---""")
         st.markdown(f" <h1 style='text-align: left; color: gray; font-size:16px; "
                     f"font-family:Avenir; font-weight:normal'>"
-                    f"LUPE X B-SOiD is developed by Alexander Hsu and Justin James</h1> "
+                    f"LUPE B-SOiD is developed by Alexander Hsu and Justin James</h1> "
                     , unsafe_allow_html=True)

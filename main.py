@@ -78,10 +78,10 @@ if not authentication_status:
     bottom_cont = st.container()
     _, bottom_mid, _ = bottom_cont.columns([1, 4, 1])
     with bottom_mid:
-        st.markdown("""---""")
+        # st.markdown("""---""")
         st.markdown(f" <h1 style='text-align: center; color: gray; font-size:16px; "
                     f"font-family:Avenir; font-weight:normal'>"
-                    f"LUPE X B-SOiD is developed by Alexander Hsu and Justin James</h1> "
+                    f"LUPE B-SOiD is developed by Alexander Hsu and Justin James</h1> "
                     , unsafe_allow_html=True)
 elif authentication_status:
     with st.sidebar:
